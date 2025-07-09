@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Key, Database, Bell, Shield, Globe, Cog } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import DerivConnection from "@/components/deriv/DerivConnection";
 
 export const SettingsPanel = () => {
   const { toast } = useToast();
@@ -86,7 +87,11 @@ export const SettingsPanel = () => {
       </div>
 
       <Tabs defaultValue="api" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="deriv" className="flex items-center space-x-2">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Deriv</span>
+          </TabsTrigger>
           <TabsTrigger value="api" className="flex items-center space-x-2">
             <Key className="h-4 w-4" />
             <span className="hidden sm:inline">API</span>
@@ -104,6 +109,10 @@ export const SettingsPanel = () => {
             <span className="hidden sm:inline">Advanced</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="deriv" className="space-y-6">
+          <DerivConnection />
+        </TabsContent>
 
         <TabsContent value="api" className="space-y-6">
           <Card className="trading-card">
