@@ -2,41 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* EdgeAIEngine Trading Platform Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Trading Platform Color Palette */
+    --background: 218 23% 8%;
+    --foreground: 218 11% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 218 20% 10%;
+    --card-foreground: 218 11% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 218 20% 10%;
+    --popover-foreground: 218 11% 92%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Trading Brand Colors */
+    --primary: 142 69% 52%;
+    --primary-foreground: 218 23% 8%;
+    --primary-glow: 142 69% 65%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 218 15% 16%;
+    --secondary-foreground: 218 11% 85%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 218 15% 14%;
+    --muted-foreground: 218 8% 60%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 39 100% 60%;
+    --accent-foreground: 218 23% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Trading Specific Colors */
+    --success: 142 69% 52%;
+    --success-foreground: 218 23% 8%;
+    
+    --danger: 0 85% 60%;
+    --danger-foreground: 218 11% 92%;
+    
+    --warning: 39 100% 60%;
+    --warning-foreground: 218 23% 8%;
+    
+    --info: 208 100% 60%;
+    --info-foreground: 218 11% 92%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 218 11% 92%;
 
-    --radius: 0.5rem;
+    --border: 218 15% 18%;
+    --input: 218 15% 16%;
+    --ring: 142 69% 52%;
+
+    --radius: 0.75rem;
+
+    /* Trading Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-success: linear-gradient(135deg, hsl(142 69% 52%), hsl(142 69% 65%));
+    --gradient-danger: linear-gradient(135deg, hsl(0 85% 60%), hsl(0 85% 70%));
+    --gradient-card: linear-gradient(145deg, hsl(218 20% 10%), hsl(218 15% 12%));
+    --gradient-background: linear-gradient(180deg, hsl(218 23% 8%), hsl(218 25% 6%));
+
+    /* Trading Shadows */
+    --shadow-trading: 0 8px 32px hsl(218 23% 4% / 0.4);
+    --shadow-card: 0 4px 24px hsl(218 23% 4% / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.3);
+    --shadow-success: 0 4px 20px hsl(142 69% 52% / 0.25);
+    --shadow-danger: 0 4px 20px hsl(0 85% 60% / 0.25);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +133,96 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    background: var(--gradient-background);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Trading Cards */
+  .trading-card {
+    @apply bg-card border border-border rounded-xl;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
+  }
+
+  .trading-card:hover {
+    box-shadow: var(--shadow-trading);
+    transform: translateY(-2px);
+  }
+
+  /* Trading Buttons */
+  .btn-trading {
+    @apply px-6 py-3 rounded-lg font-semibold;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-success);
+    transition: var(--transition-bounce);
+  }
+
+  .btn-trading:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-danger {
+    @apply px-4 py-2 rounded-lg font-medium;
+    background: var(--gradient-danger);
+    box-shadow: var(--shadow-danger);
+    transition: var(--transition-smooth);
+  }
+
+  /* Profit/Loss indicators */
+  .profit {
+    @apply text-success;
+    text-shadow: 0 0 10px hsl(var(--success) / 0.3);
+  }
+
+  .loss {
+    @apply text-danger;
+    text-shadow: 0 0 10px hsl(var(--danger) / 0.3);
+  }
+
+  /* Glowing effects */
+  .glow-success {
+    box-shadow: var(--shadow-success);
+  }
+
+  .glow-danger {
+    box-shadow: var(--shadow-danger);
+  }
+
+  .glow-primary {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Trading grid */
+  .trading-grid {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary-glow));
   }
 }
