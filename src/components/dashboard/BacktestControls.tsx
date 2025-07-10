@@ -206,20 +206,24 @@ export const BacktestControls = () => {
       <Card className="p-4">
         <div className="text-sm space-y-2">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Total Return:</span>
-            <span className="profit font-medium">+24.5%</span>
+            <span className="text-muted-foreground">Retorno Total:</span>
+            <span className="text-green-600 font-medium">+24.5%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Max Drawdown:</span>
-            <span className="loss font-medium">-5.2%</span>
+            <span className="text-muted-foreground">Drawdown Máximo:</span>
+            <span className="text-red-600 font-medium">-5.2%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Sharpe Ratio:</span>
+            <span className="text-muted-foreground">Índice Sharpe:</span>
             <span className="font-medium">1.84</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Win Rate:</span>
+            <span className="text-muted-foreground">Taxa de Acerto:</span>
             <span className="font-medium">67.3%</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Trades Executados:</span>
+            <span className="font-medium">{isRunning ? '...' : '156'}</span>
           </div>
         </div>
       </Card>
