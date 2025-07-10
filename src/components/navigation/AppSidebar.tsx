@@ -61,11 +61,11 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const isActive = (tabId: string) => activeTab === tabId;
 
   return (
-    <Sidebar className="w-16 border-r border-border/20" collapsible="icon">
-      <SidebarContent className="bg-background/95 backdrop-blur-sm">
-        <SidebarGroup className="py-6">
+    <Sidebar className="w-12" collapsible="icon">
+      <SidebarContent className="bg-background">
+        <SidebarGroup className="py-4 px-1">
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-3">
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.id);
@@ -75,11 +75,11 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
                     <SidebarMenuButton
                       onClick={() => onTabChange(item.id)}
                       className={`
-                        group relative h-10 w-10 mx-auto rounded-lg transition-all duration-200 
-                        hover:scale-[1.02] cursor-pointer border border-transparent
+                        group relative h-8 w-8 mx-auto rounded-md transition-all duration-200 
+                        hover:scale-[1.05] cursor-pointer
                         ${active 
-                          ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' 
-                          : 'bg-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground hover:border-border/50'
+                          ? 'bg-primary/15 text-primary' 
+                          : 'bg-transparent hover:bg-muted/30 text-muted-foreground hover:text-foreground'
                         }
                       `}
                       title={item.tooltip}
@@ -91,10 +91,10 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
                         <div className="absolute -right-[1px] top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-full" />
                       )}
                       
-                      {/* Tooltip */}
-                      <div className="absolute left-14 top-1/2 -translate-y-1/2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-border/50">
-                        {item.label}
-                      </div>
+                       {/* Tooltip */}
+                       <div className="absolute left-10 top-1/2 -translate-y-1/2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-border/50">
+                         {item.label}
+                       </div>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
