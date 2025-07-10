@@ -30,8 +30,37 @@ const Index = () => {
       case "dashboard":
         return (
           <div className="space-y-6">
-            {/* Trading History Table */}
-            <TradingHistory />
+            {/* Main Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <MetricsCard
+                title="Banca Atual"
+                value={`$${bancaAtual.toLocaleString()}`}
+                icon={Activity}
+                trend="up"
+                change="2.5%"
+              />
+              <MetricsCard
+                title="Profit Total"
+                value={`$${profit.toLocaleString()}`}
+                icon={TrendingUp}
+                trend="up"
+                change="15.2%"
+              />
+              <MetricsCard
+                title="Win/Loss"
+                value={`${wins}/${losses}`}
+                icon={Target}
+                trend="up"
+                change="8 trades hoje"
+              />
+              <MetricsCard
+                title="Taxa de Acerto"
+                value={`${taxaAcerto}%`}
+                icon={Zap}
+                trend="up"
+                change="3.2% esta semana"
+              />
+            </div>
 
             {/* Equity Curve Chart - Full Width */}
             <Card className="trading-card">
