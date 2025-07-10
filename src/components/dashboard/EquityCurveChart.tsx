@@ -23,6 +23,16 @@ interface TradeEntry {
   type: 'CALL' | 'PUT';
   amount: number;
   status: 'active' | 'won' | 'lost';
+  profit?: number;
+}
+
+interface TradingAccount {
+  balance: number;
+  initialBalance: number;
+  totalProfit: number;
+  totalLoss: number;
+  winRate: number;
+  totalTrades: number;
 }
 
 const LiveCandlestickChart = () => {
@@ -33,6 +43,16 @@ const LiveCandlestickChart = () => {
   const [candleCount, setCandleCount] = useState(50);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [syncStatus, setSyncStatus] = useState<'synced' | 'updating' | 'delayed'>('synced');
+  
+  // Trading Account State - LOCAL
+  const [account, setAccount] = useState<TradingAccount>({
+    balance: 1000.00,        // Saldo inicial de $1000
+    initialBalance: 1000.00, // Balanço inicial para cálculos
+    totalProfit: 0,
+    totalLoss: 0,
+    winRate: 0,
+    totalTrades: 0
+  });
 
   // Generate initial candlestick data
   useEffect(() => {
@@ -103,6 +123,70 @@ const LiveCandlestickChart = () => {
     generateCandleData();
   }, []);
 
+  // Função para calcular lucro de trade
+  const calculateTradeProfit = (trade: TradeEntry, currentPrice: number): number => {
+    if (!trade.exitPrice) return 0;
+    
+    const payout = 0.85; // 85% payout para trades vencedores
+    const isWinningTrade = 
+      (trade.type === 'CALL' && trade.exitPrice > trade.entryPrice) ||
+      (trade.type === 'PUT' && trade.exitPrice < trade.entryPrice);
+    
+    return isWinningTrade ? trade.amount * payout : -trade.amount;
+  };
+
+  // Atualizar banca quando trades são resolvidos
+  useEffect(() => {
+    const resolvedTrades = tradeEntries.filter(t => t.status !== 'active' && t.profit === undefined);
+    
+    if (resolvedTrades.length > 0) {
+      let totalProfitChange = 0;
+      let totalLossChange = 0;
+      let winCount = 0;
+      
+      resolvedTrades.forEach(trade => {
+        const profit = calculateTradeProfit(trade, trade.exitPrice || 0);
+        
+        if (profit > 0) {
+          totalProfitChange += profit;
+          winCount++;
+        } else {
+          totalLossChange += Math.abs(profit);
+        }
+        
+        // Mark trade as processed
+        trade.profit = profit;
+      });
+      
+      setAccount(prev => {
+        const newBalance = prev.balance + totalProfitChange - totalLossChange;
+        const newTotalTrades = prev.totalTrades + resolvedTrades.length;
+        const newTotalProfit = prev.totalProfit + totalProfitChange;
+        const newTotalLoss = prev.totalLoss + totalLossChange;
+        const newWinRate = newTotalTrades > 0 ? (newTotalProfit / (newTotalProfit + newTotalLoss)) * 100 : 0;
+        
+        console.log('💰 Banca Atualizada:', {
+          saldoAnterior: prev.balance.toFixed(2),
+          novoSaldo: newBalance.toFixed(2),
+          lucro: totalProfitChange.toFixed(2),
+          perda: totalLossChange.toFixed(2),
+          trades: resolvedTrades.length,
+          winRate: newWinRate.toFixed(1) + '%'
+        });
+        
+        return {
+          ...prev,
+          balance: newBalance,
+          totalProfit: newTotalProfit,
+          totalLoss: newTotalLoss,
+          winRate: newWinRate,
+          totalTrades: newTotalTrades
+        };
+      });
+    }
+  }, [tradeEntries]);
+
+
   // Real-time synchronized live updates
   useEffect(() => {
     if (!isLive) return;
@@ -162,6 +246,35 @@ const LiveCandlestickChart = () => {
             
             setTradeEntries(prevTrades => [newTrade, ...prevTrades.slice(0, 19)]);
           }
+
+          // Resolve active trades (simulate 1-minute expiry)
+          setTradeEntries(prevTrades => 
+            prevTrades.map(trade => {
+              if (trade.status === 'active' && (now - trade.timestamp) >= 60000) {
+                const isWinner = 
+                  (trade.type === 'CALL' && newCandle.close > trade.entryPrice) ||
+                  (trade.type === 'PUT' && newCandle.close < trade.entryPrice);
+                
+                const updatedTrade = {
+                  ...trade,
+                  status: isWinner ? 'won' as const : 'lost' as const,
+                  exitPrice: newCandle.close
+                };
+                
+                console.log('✅ Trade Resolved:', {
+                  id: trade.id,
+                  type: trade.type,
+                  result: updatedTrade.status,
+                  entry: trade.entryPrice.toFixed(3),
+                  exit: newCandle.close.toFixed(3),
+                  profit: isWinner ? (trade.amount * 0.85).toFixed(2) : `-${trade.amount.toFixed(2)}`
+                });
+                
+                return updatedTrade;
+              }
+              return trade;
+            })
+          );
           
           setLastUpdateTime(now);
           setSyncStatus('synced');
@@ -380,6 +493,70 @@ const LiveCandlestickChart = () => {
 
   return (
     <div className="space-y-4">
+      {/* Trading Account Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border-green-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Saldo Atual</p>
+                <p className={`text-2xl font-bold ${account.balance >= account.initialBalance ? 'text-green-600' : 'text-red-600'}`}>
+                  ${account.balance.toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {account.balance >= account.initialBalance ? '+' : ''}
+                  ${(account.balance - account.initialBalance).toFixed(2)}
+                </p>
+              </div>
+              <div className={`w-3 h-3 rounded-full ${account.balance >= account.initialBalance ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Lucro Total</p>
+              <p className="text-xl font-bold text-green-600">${account.totalProfit.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Ganhos acumulados</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Perda Total</p>
+              <p className="text-xl font-bold text-red-600">${account.totalLoss.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Perdas acumuladas</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Win Rate</p>
+              <p className={`text-xl font-bold ${account.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                {account.winRate.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground">{account.totalTrades} trades</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">ROI</p>
+              <p className={`text-xl font-bold ${account.balance >= account.initialBalance ? 'text-green-600' : 'text-red-600'}`}>
+                {(((account.balance - account.initialBalance) / account.initialBalance) * 100).toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground">Retorno sobre investimento</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
