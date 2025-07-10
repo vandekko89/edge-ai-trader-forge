@@ -3,7 +3,7 @@ import { ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar } from '
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Square, TrendingUp } from "lucide-react";
+import { Play, Square, TrendingUp, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 interface CandleData {
   time: string;
@@ -29,6 +29,8 @@ const LiveCandlestickChart = () => {
   const [candleData, setCandleData] = useState<CandleData[]>([]);
   const [tradeEntries, setTradeEntries] = useState<TradeEntry[]>([]);
   const [isLive, setIsLive] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [candleCount, setCandleCount] = useState(50); // Number of candles to show
 
   // Generate initial candlestick data
   useEffect(() => {
@@ -339,6 +341,44 @@ const LiveCandlestickChart = () => {
     return null;
   };
 
+  // Zoom functions
+  const handleZoomIn = () => {
+    if (candleCount > 10) {
+      setCandleCount(prev => Math.max(10, prev - 10));
+      setZoomLevel(prev => prev + 0.2);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (candleCount < candleData.length) {
+      setCandleCount(prev => Math.min(candleData.length, prev + 10));
+      setZoomLevel(prev => Math.max(0.2, prev - 0.2));
+    }
+  };
+
+  const handleResetZoom = () => {
+    setCandleCount(50);
+    setZoomLevel(1);
+  };
+
+  // Handle mouse wheel zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
+  };
+
+  // Get visible candle data based on zoom
+  const visibleCandleData = candleData.slice(-candleCount);
+  
+  // Calculate Y domain for visible data
+  const visiblePrices = visibleCandleData.flatMap(candle => [candle.high, candle.low]);
+  const yMin = Math.min(...visiblePrices) - 0.5;
+  const yMax = Math.max(...visiblePrices) + 0.5;
+
   return (
     <div className="space-y-4">
       {/* Controls */}
@@ -369,6 +409,36 @@ const LiveCandlestickChart = () => {
           <div className="text-sm text-muted-foreground">
             R_50 • 1M
           </div>
+
+          {/* Zoom Controls */}
+          <div className="flex items-center space-x-2 border-l pl-4">
+            <Button
+              onClick={handleZoomIn}
+              variant="outline"
+              size="sm"
+              disabled={candleCount <= 10}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={handleZoomOut}
+              variant="outline"
+              size="sm"
+              disabled={candleCount >= candleData.length}
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={handleResetZoom}
+              variant="outline"
+              size="sm"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {candleCount} candles • {zoomLevel.toFixed(1)}x
+            </span>
+          </div>
         </div>
 
         <div className="text-sm text-muted-foreground">
@@ -396,9 +466,12 @@ const LiveCandlestickChart = () => {
           <CardDescription>Visualização em tempo real estilo corretora</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[500px] w-full">
+          <div 
+            className="h-[500px] w-full cursor-crosshair" 
+            onWheel={handleWheel}
+          >
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={candleData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <ComposedChart data={visibleCandleData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <XAxis 
                   dataKey="time"
                   axisLine={false}
