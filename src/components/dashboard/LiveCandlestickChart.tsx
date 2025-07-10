@@ -115,46 +115,104 @@ const LiveCandlestickChart = () => {
   useEffect(() => {
     if (!isLive) return;
 
-    const interval = setInterval(() => {
-      setCandleData(prevData => {
-        const newData = [...prevData];
-        const lastCandle = newData[newData.length - 1];
-        const now = Date.now();
-        
-        if (now - lastCandle.timestamp > 60000) {
-          const volatility = Math.random() * 0.02 - 0.01;
-          const newCandle: CandleData = {
-            time: new Date(now).toLocaleTimeString('pt-BR', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            }),
-            timestamp: now,
-            open: lastCandle.close,
-            high: lastCandle.close + Math.random() * 3,
-            low: lastCandle.close - Math.random() * 3,
-            close: lastCandle.close + (volatility * lastCandle.close),
-            volume: Math.floor(Math.random() * 1000) + 100
-          };
-          
-          newData.push(newCandle);
-          if (newData.length > 100) {
-            newData.shift();
-          }
-        } else {
-          const volatility = Math.random() * 0.01 - 0.005;
-          const updatedCandle = { ...lastCandle };
-          updatedCandle.close = lastCandle.close + (volatility * lastCandle.close);
-          updatedCandle.high = Math.max(updatedCandle.high, updatedCandle.close);
-          updatedCandle.low = Math.min(updatedCandle.low, updatedCandle.close);
-          newData[newData.length - 1] = updatedCandle;
-        }
-        
-        return newData;
-      });
-    }, 2000);
+    let tickSubscription: any = null;
 
-    return () => clearInterval(interval);
-  }, [isLive]);
+    const startLiveData = async () => {
+      try {
+        // Subscribe to real ticks if connected to Deriv API
+        if (derivApi.connected) {
+          await derivApi.subscribeTicks(currentSymbol, (tickData) => {
+            setCandleData(prevData => {
+              const newData = [...prevData];
+              const lastCandle = newData[newData.length - 1];
+              const now = Date.now();
+              
+              if (now - lastCandle.timestamp > 60000) {
+                // Create new candle
+                const newCandle: CandleData = {
+                  time: new Date(now).toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  }),
+                  timestamp: now,
+                  open: tickData.quote,
+                  high: tickData.quote,
+                  low: tickData.quote,
+                  close: tickData.quote,
+                  volume: Math.floor(Math.random() * 1000) + 100
+                };
+                
+                newData.push(newCandle);
+                if (newData.length > 100) {
+                  newData.shift();
+                }
+              } else {
+                // Update last candle
+                const updatedCandle = { ...lastCandle };
+                updatedCandle.close = tickData.quote;
+                updatedCandle.high = Math.max(updatedCandle.high, tickData.quote);
+                updatedCandle.low = Math.min(updatedCandle.low, tickData.quote);
+                newData[newData.length - 1] = updatedCandle;
+              }
+              
+              return newData;
+            });
+          });
+        } else {
+          // Fallback to mock data
+          const interval = setInterval(() => {
+            setCandleData(prevData => {
+              const newData = [...prevData];
+              const lastCandle = newData[newData.length - 1];
+              const now = Date.now();
+              
+              if (now - lastCandle.timestamp > 60000) {
+                const volatility = Math.random() * 0.02 - 0.01;
+                const newCandle: CandleData = {
+                  time: new Date(now).toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  }),
+                  timestamp: now,
+                  open: lastCandle.close,
+                  high: lastCandle.close + Math.random() * 3,
+                  low: lastCandle.close - Math.random() * 3,
+                  close: lastCandle.close + (volatility * lastCandle.close),
+                  volume: Math.floor(Math.random() * 1000) + 100
+                };
+                
+                newData.push(newCandle);
+                if (newData.length > 100) {
+                  newData.shift();
+                }
+              } else {
+                const volatility = Math.random() * 0.01 - 0.005;
+                const updatedCandle = { ...lastCandle };
+                updatedCandle.close = lastCandle.close + (volatility * lastCandle.close);
+                updatedCandle.high = Math.max(updatedCandle.high, updatedCandle.close);
+                updatedCandle.low = Math.min(updatedCandle.low, updatedCandle.close);
+                newData[newData.length - 1] = updatedCandle;
+              }
+              
+              return newData;
+            });
+          }, 2000);
+
+          return () => clearInterval(interval);
+        }
+      } catch (error) {
+        console.error('Erro ao iniciar dados ao vivo:', error);
+      }
+    };
+
+    startLiveData();
+
+    return () => {
+      if (derivApi.connected) {
+        derivApi.unsubscribeTicks(currentSymbol);
+      }
+    };
+  }, [isLive, currentSymbol]);
 
   // Componente customizado para renderizar velas
   const CustomCandlestick = (props: any) => {
