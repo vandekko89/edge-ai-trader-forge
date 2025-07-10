@@ -19,10 +19,11 @@ const Index = () => {
   const [isTrading, setIsTrading] = useState(false);
 
   // Mock data for demo
-  const portfolioValue = 12450.30;
-  const dailyPnL = 1250.45;
-  const totalReturn = 24.5;
-  const activeStrategies = 3;
+  const bancaAtual = 12450.30;
+  const profit = 3250.45;
+  const wins = 127;
+  const losses = 43;
+  const taxaAcerto = ((wins / (wins + losses)) * 100).toFixed(1);
 
   const renderActiveContent = () => {
     switch (activeTab) {
@@ -112,14 +113,20 @@ const Index = () => {
                 <div className="flex items-center space-x-4">
                   <div className="hidden md:flex items-center space-x-6">
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Portfolio Value</p>
-                      <p className="text-lg font-bold text-foreground">${portfolioValue.toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">Banca Atual</p>
+                      <p className="text-lg font-bold text-foreground">${bancaAtual.toLocaleString()}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Daily P&L</p>
-                      <p className={`text-lg font-bold ${dailyPnL >= 0 ? 'profit' : 'loss'}`}>
-                        {dailyPnL >= 0 ? '+' : ''}${dailyPnL.toLocaleString()}
-                      </p>
+                      <p className="text-sm text-muted-foreground">Profit</p>
+                      <p className="text-lg font-bold profit">+${profit.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Win/Loss</p>
+                      <p className="text-lg font-bold text-foreground">{wins}/{losses}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Taxa de Acerto</p>
+                      <p className="text-lg font-bold text-success">{taxaAcerto}%</p>
                     </div>
                   </div>
                   
