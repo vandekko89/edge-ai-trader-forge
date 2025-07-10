@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Key, Database, Bell, Shield, Globe, Cog } from "lucide-react";
+import { Key, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DerivConnection from "@/components/deriv/DerivConnection";
 
@@ -23,20 +23,14 @@ export const SettingsPanel = () => {
     timeout: 30
   });
 
-  const [tradingSettings, setTradingSettings] = useState({
-    max_position_size: 0.1,
-    stop_loss_percentage: 2.0,
-    take_profit_percentage: 5.0,
-    max_daily_trades: 50,
-    risk_per_trade: 1.0
-  });
-
-  const [notifications, setNotifications] = useState({
-    email_alerts: true,
-    trade_confirmations: true,
-    error_notifications: true,
-    performance_reports: false,
-    daily_summary: true
+  const [brokerSettings, setBrokerSettings] = useState({
+    selected_broker: "bybit",
+    bybit_api_key: "••••••••••••••••",
+    bybit_secret: "••••••••••••••••", 
+    binance_api_key: "••••••••••••••••",
+    binance_secret: "••••••••••••••••",
+    deriv_app_id: "••••••••••••••••",
+    deriv_token: "••••••••••••••••"
   });
 
   const saveApiSettings = () => {
@@ -46,17 +40,10 @@ export const SettingsPanel = () => {
     });
   };
 
-  const saveTradingSettings = () => {
+  const saveBrokerSettings = () => {
     toast({
-      title: "Trading Settings Saved",
-      description: "Your trading parameters have been updated.",
-    });
-  };
-
-  const saveNotificationSettings = () => {
-    toast({
-      title: "Notification Settings Saved",
-      description: "Your notification preferences have been updated.",
+      title: "Broker Settings Saved", 
+      description: "Your broker configuration has been updated successfully.",
     });
   };
 
@@ -78,35 +65,23 @@ export const SettingsPanel = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Settings</h2>
-          <p className="text-muted-foreground">Configure your trading environment and preferences</p>
+          <h2 className="text-2xl font-bold">API Settings</h2>
+          <p className="text-muted-foreground">Configure broker connections and API credentials</p>
         </div>
         <Badge variant={isConnected ? "default" : "destructive"} className="text-sm">
           {isConnected ? "Connected" : "Disconnected"}
         </Badge>
       </div>
 
-      <Tabs defaultValue="api" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs defaultValue="deriv" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="deriv" className="flex items-center space-x-2">
             <Globe className="h-4 w-4" />
             <span className="hidden sm:inline">Deriv</span>
           </TabsTrigger>
-          <TabsTrigger value="api" className="flex items-center space-x-2">
+          <TabsTrigger value="brokers" className="flex items-center space-x-2">
             <Key className="h-4 w-4" />
-            <span className="hidden sm:inline">API</span>
-          </TabsTrigger>
-          <TabsTrigger value="trading" className="flex items-center space-x-2">
-            <Cog className="h-4 w-4" />
-            <span className="hidden sm:inline">Trading</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center space-x-2">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Alerts</span>
-          </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex items-center space-x-2">
-            <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Advanced</span>
+            <span className="hidden sm:inline">Brokers</span>
           </TabsTrigger>
         </TabsList>
 
@@ -114,289 +89,138 @@ export const SettingsPanel = () => {
           <DerivConnection />
         </TabsContent>
 
-        <TabsContent value="api" className="space-y-6">
+        <TabsContent value="brokers" className="space-y-6">
           <Card className="trading-card">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Key className="h-5 w-5 text-primary" />
-                <span>API Configuration</span>
+                <span>Broker Selection</span>
               </CardTitle>
               <CardDescription>
-                Configure your exchange API credentials and connection settings
+                Choose your broker and configure API credentials
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="api-key">Bybit API Key</Label>
-                    <Input
-                      id="api-key"
-                      type="password"
-                      value={apiSettings.bybit_api_key}
-                      onChange={(e) => setApiSettings(prev => ({ ...prev, bybit_api_key: e.target.value }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="api-secret">Bybit Secret</Label>
-                    <Input
-                      id="api-secret"
-                      type="password"
-                      value={apiSettings.bybit_secret}
-                      onChange={(e) => setApiSettings(prev => ({ ...prev, bybit_secret: e.target.value }))}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
+              <div>
+                <Label htmlFor="broker-select">Select Broker</Label>
+                <Select value={brokerSettings.selected_broker} onValueChange={(value) => 
+                  setBrokerSettings(prev => ({ ...prev, selected_broker: value }))
+                }>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bybit">Bybit</SelectItem>
+                    <SelectItem value="binance">Binance</SelectItem>
+                    <SelectItem value="deriv">Deriv</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
+              <Separator />
+
+              {brokerSettings.selected_broker === "bybit" && (
                 <div className="space-y-4">
+                  <h4 className="font-medium">Bybit Credentials</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="bybit-key">API Key</Label>
+                      <Input
+                        id="bybit-key"
+                        type="password"
+                        value={brokerSettings.bybit_api_key}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, bybit_api_key: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bybit-secret">Secret</Label>
+                      <Input
+                        id="bybit-secret"
+                        type="password"
+                        value={brokerSettings.bybit_secret}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, bybit_secret: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="testnet">Testnet Mode</Label>
+                    <Label htmlFor="bybit-testnet">Testnet Mode</Label>
                     <Switch
-                      id="testnet"
+                      id="bybit-testnet"
                       checked={apiSettings.testnet_mode}
                       onCheckedChange={(checked) => 
                         setApiSettings(prev => ({ ...prev, testnet_mode: checked }))
                       }
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="max-retries">Max Retries</Label>
-                    <Input
-                      id="max-retries"
-                      type="number"
-                      value={apiSettings.max_retries}
-                      onChange={(e) => setApiSettings(prev => ({ ...prev, max_retries: parseInt(e.target.value) }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="timeout">Timeout (seconds)</Label>
-                    <Input
-                      id="timeout"
-                      type="number"
-                      value={apiSettings.timeout}
-                      onChange={(e) => setApiSettings(prev => ({ ...prev, timeout: parseInt(e.target.value) }))}
-                      className="mt-1"
-                    />
+                </div>
+              )}
+
+              {brokerSettings.selected_broker === "binance" && (
+                <div className="space-y-4">
+                  <h4 className="font-medium">Binance Credentials</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="binance-key">API Key</Label>
+                      <Input
+                        id="binance-key"
+                        type="password"
+                        value={brokerSettings.binance_api_key}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, binance_api_key: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="binance-secret">Secret Key</Label>
+                      <Input
+                        id="binance-secret"
+                        type="password"
+                        value={brokerSettings.binance_secret}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, binance_secret: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {brokerSettings.selected_broker === "deriv" && (
+                <div className="space-y-4">
+                  <h4 className="font-medium">Deriv Credentials</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="deriv-app">App ID</Label>
+                      <Input
+                        id="deriv-app"
+                        type="password"
+                        value={brokerSettings.deriv_app_id}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, deriv_app_id: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="deriv-token">API Token</Label>
+                      <Input
+                        id="deriv-token"
+                        type="password"
+                        value={brokerSettings.deriv_token}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, deriv_token: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <Separator />
 
               <div className="flex space-x-3">
-                <Button onClick={saveApiSettings} className="btn-trading">
-                  Save API Settings
+                <Button onClick={saveBrokerSettings} className="btn-trading">
+                  Save Broker Settings
                 </Button>
                 <Button variant="outline" onClick={testConnection}>
                   Test Connection
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="trading" className="space-y-6">
-          <Card className="trading-card">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Cog className="h-5 w-5 text-primary" />
-                <span>Trading Parameters</span>
-              </CardTitle>
-              <CardDescription>
-                Configure risk management and trading execution settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="max-position">Max Position Size (%)</Label>
-                    <Input
-                      id="max-position"
-                      type="number"
-                      step="0.01"
-                      value={tradingSettings.max_position_size}
-                      onChange={(e) => setTradingSettings(prev => ({ 
-                        ...prev, 
-                        max_position_size: parseFloat(e.target.value) 
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="stop-loss">Default Stop Loss (%)</Label>
-                    <Input
-                      id="stop-loss"
-                      type="number"
-                      step="0.1"
-                      value={tradingSettings.stop_loss_percentage}
-                      onChange={(e) => setTradingSettings(prev => ({ 
-                        ...prev, 
-                        stop_loss_percentage: parseFloat(e.target.value) 
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="take-profit">Default Take Profit (%)</Label>
-                    <Input
-                      id="take-profit"
-                      type="number"
-                      step="0.1"
-                      value={tradingSettings.take_profit_percentage}
-                      onChange={(e) => setTradingSettings(prev => ({ 
-                        ...prev, 
-                        take_profit_percentage: parseFloat(e.target.value) 
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="max-trades">Max Daily Trades</Label>
-                    <Input
-                      id="max-trades"
-                      type="number"
-                      value={tradingSettings.max_daily_trades}
-                      onChange={(e) => setTradingSettings(prev => ({ 
-                        ...prev, 
-                        max_daily_trades: parseInt(e.target.value) 
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="risk-per-trade">Risk Per Trade (%)</Label>
-                    <Input
-                      id="risk-per-trade"
-                      type="number"
-                      step="0.1"
-                      value={tradingSettings.risk_per_trade}
-                      onChange={(e) => setTradingSettings(prev => ({ 
-                        ...prev, 
-                        risk_per_trade: parseFloat(e.target.value) 
-                      }))}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <Button onClick={saveTradingSettings} className="btn-trading">
-                Save Trading Settings
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-6">
-          <Card className="trading-card">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bell className="h-5 w-5 text-primary" />
-                <span>Notification Settings</span>
-              </CardTitle>
-              <CardDescription>
-                Configure alerts and notification preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                {Object.entries(notifications).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <Label className="capitalize">
-                      {key.replace(/_/g, ' ')}
-                    </Label>
-                    <Switch
-                      checked={value}
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, [key]: checked }))
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <Separator />
-
-              <Button onClick={saveNotificationSettings} className="btn-trading">
-                Save Notification Settings
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="advanced" className="space-y-6">
-          <Card className="trading-card">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <span>Advanced Settings</span>
-              </CardTitle>
-              <CardDescription>
-                Advanced configuration and system settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="log-level">Log Level</Label>
-                  <Select defaultValue="info">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="debug">Debug</SelectItem>
-                      <SelectItem value="info">Info</SelectItem>
-                      <SelectItem value="warning">Warning</SelectItem>
-                      <SelectItem value="error">Error</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="data-source">Data Source</Label>
-                  <Select defaultValue="ccxt">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ccxt">CCXT (Live)</SelectItem>
-                      <SelectItem value="csv">CSV Files</SelectItem>
-                      <SelectItem value="polygon">Polygon.io</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label>Enable Paper Trading</Label>
-                  <Switch defaultChecked />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label>Circuit Breaker</Label>
-                  <Switch defaultChecked />
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="flex space-x-3">
-                <Button variant="outline" className="btn-danger">
-                  Reset All Settings
-                </Button>
-                <Button variant="outline">
-                  Export Configuration
-                </Button>
-                <Button variant="outline">
-                  Import Configuration
                 </Button>
               </div>
             </CardContent>

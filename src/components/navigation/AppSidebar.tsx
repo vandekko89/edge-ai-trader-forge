@@ -37,6 +37,12 @@ const navigationItems = [
     tooltip: "Gerenciamento de estratégias"
   },
   { 
+    id: "trading", 
+    icon: Activity, 
+    label: "Trading",
+    tooltip: "Configurações de trading"
+  },
+  { 
     id: "logs", 
     icon: Activity, 
     label: "Logs",
@@ -46,7 +52,7 @@ const navigationItems = [
     id: "settings", 
     icon: Settings, 
     label: "Settings",
-    tooltip: "Configurações"
+    tooltip: "Configurações de API"
   },
 ];
 

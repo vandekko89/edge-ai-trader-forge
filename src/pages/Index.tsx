@@ -10,6 +10,7 @@ import { BacktestControls } from "@/components/dashboard/BacktestControls";
 import { MetricsCard } from "@/components/dashboard/MetricsCard";
 import { AIAnalysis } from "@/components/dashboard/AIAnalysis";
 import { StrategyManager } from "@/components/strategies/StrategyManager";
+import { TradingPanel } from "@/components/trading/TradingPanel";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 
 const Index = () => {
@@ -97,6 +98,8 @@ const Index = () => {
         );
       case "strategies":
         return <StrategyManager />;
+      case "trading":
+        return <TradingPanel />;
       case "logs":
         return (
           <div className="text-center py-8 text-muted-foreground">
