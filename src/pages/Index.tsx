@@ -20,6 +20,7 @@ const Index = () => {
   const [isTrading, setIsTrading] = useState(false);
 
   // Mock data for demo
+  const userName = "João Silva"; // Nome do usuário
   const bancaAtual = 12450.30;
   const profit = 3250.45;
   const wins = 127;
@@ -140,15 +141,22 @@ const Index = () => {
                     </div>
                     
                     {/* Status da conexão e operação */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                       <Badge variant="outline" className="border-success text-success">
                         <div className="w-2 h-2 rounded-full bg-success animate-pulse mr-2" />
                         Conectado
                       </Badge>
+                      <div className="w-px h-4 bg-border" />
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {userName}
+                      </span>
                       {isTrading && (
-                        <Badge variant="outline" className="border-warning text-warning animate-pulse">
-                          Operando
-                        </Badge>
+                        <>
+                          <div className="w-px h-4 bg-border" />
+                          <Badge variant="outline" className="border-warning text-warning animate-pulse">
+                            Operando
+                          </Badge>
+                        </>
                       )}
                     </div>
                   </div>
