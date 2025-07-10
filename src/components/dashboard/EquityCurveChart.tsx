@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar } from 'recharts';
+import { ResponsiveContainer } from 'recharts';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +30,7 @@ const LiveCandlestickChart = () => {
   const [tradeEntries, setTradeEntries] = useState<TradeEntry[]>([]);
   const [isLive, setIsLive] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [candleCount, setCandleCount] = useState(50); // Number of candles to show
+  const [candleCount, setCandleCount] = useState(50);
 
   // Generate initial candlestick data
   useEffect(() => {
@@ -40,16 +40,16 @@ const LiveCandlestickChart = () => {
       let basePrice = 500.50;
       
       for (let i = 0; i < 100; i++) {
-        const timestamp = Date.now() - (100 - i) * 60000; // 1 minute candles
+        const timestamp = Date.now() - (100 - i) * 60000;
         
         // Generate OHLC data with realistic variations
         const open = basePrice;
-        const volatility = (Math.random() - 0.5) * 0.08; // 8% max change for more variation
+        const volatility = (Math.random() - 0.5) * 0.08;
         const close = open * (1 + volatility);
         
         // Create realistic high/low with proper ranges
-        const highVariation = Math.random() * 0.03; // Up to 3% higher
-        const lowVariation = Math.random() * 0.03;  // Up to 3% lower
+        const highVariation = Math.random() * 0.03;
+        const lowVariation = Math.random() * 0.03;
         const high = Math.max(open, close) * (1 + highVariation);
         const low = Math.min(open, close) * (1 - lowVariation);
         
@@ -80,7 +80,6 @@ const LiveCandlestickChart = () => {
             status: 'active'
           };
 
-          // Simulate trade results for older entries
           if (i < 95) {
             const futureCandle = data[i + 5];
             if (futureCandle) {
@@ -112,7 +111,7 @@ const LiveCandlestickChart = () => {
         const now = Date.now();
         const timeDiff = now - lastCandle.timestamp;
         
-        if (timeDiff >= 60000) { // New candle every minute
+        if (timeDiff >= 60000) {
           const newCandle: CandleData = {
             time: new Date(now).toLocaleTimeString('pt-BR', { 
               hour: '2-digit', 
@@ -126,10 +125,8 @@ const LiveCandlestickChart = () => {
             volume: Math.floor(Math.random() * 1000) + 500
           };
           
-          // Keep only last 100 candles
           const newData = [...prev.slice(1), newCandle];
           
-          // Add new trade entry occasionally
           if (Math.random() > 0.8) {
             const newTrade: TradeEntry = {
               id: `trade-${now}`,
@@ -145,7 +142,6 @@ const LiveCandlestickChart = () => {
           
           return newData;
         } else {
-          // Update current candle
           const updatedCandle = { ...lastCandle };
           const priceChange = (Math.random() - 0.5) * 0.005;
           updatedCandle.close = updatedCandle.close * (1 + priceChange);
@@ -156,199 +152,152 @@ const LiveCandlestickChart = () => {
           return [...prev.slice(0, -1), updatedCandle];
         }
       });
-    }, 1500); // Update every 1.5 seconds
+    }, 1500);
 
     return () => clearInterval(interval);
   }, [isLive]);
 
-  // Custom Candlestick component - Professional brokerage style
-  const CustomCandlestick = (props: any) => {
-    const { x, y, width, height, payload } = props;
-    if (!payload) return null;
+  // Custom SVG Candlestick Chart
+  const CustomCandlestickChart = ({ data, width, height }: { data: CandleData[], width: number, height: number }) => {
+    if (!data.length) return null;
 
-    const { open, high, low, close, timestamp } = payload;
-    const isGreen = close >= open;
-    
-    // Professional brokerage colors
-    const greenColor = '#00c851'; // Bright green like real brokers
-    const redColor = '#ff3547';   // Bright red like real brokers
-    const color = isGreen ? greenColor : redColor;
-    
-    // Calculate Y positions based on price values relative to chart area
-    const priceRange = high - low;
-    if (priceRange === 0) return null;
-    
-    // Y positions for each price level
-    const highY = y;
-    const lowY = y + height;
-    const openY = y + ((high - open) / priceRange) * height;
-    const closeY = y + ((high - close) / priceRange) * height;
-    
-    // Professional candlestick dimensions
-    const centerX = x + width / 2;
-    const candleWidth = Math.max(width * 0.8, 5); // Professional thick body
-    const wickWidth = 1.5; // Thin professional wicks
-    
-    // Body dimensions
-    const bodyTop = Math.min(openY, closeY);
-    const bodyBottom = Math.max(openY, closeY);
-    const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
-    
-    // Find trades at this time
-    const tradesAtTime = tradeEntries.filter(trade => 
-      Math.abs(trade.timestamp - timestamp) < 30000
-    );
+    // Calculate price range
+    const allPrices = data.flatMap(candle => [candle.high, candle.low]);
+    const minPrice = Math.min(...allPrices);
+    const maxPrice = Math.max(...allPrices);
+    const priceRange = maxPrice - minPrice;
+    const padding = priceRange * 0.1;
+    const chartMin = minPrice - padding;
+    const chartMax = maxPrice + padding;
+    const chartRange = chartMax - chartMin;
+
+    const candleWidth = Math.max((width - 60) / data.length * 0.8, 3);
+    const candleSpacing = (width - 60) / data.length;
+
+    console.log('Chart data:', {
+      dataLength: data.length,
+      minPrice: minPrice.toFixed(3),
+      maxPrice: maxPrice.toFixed(3),
+      chartMin: chartMin.toFixed(3),
+      chartMax: chartMax.toFixed(3)
+    });
 
     return (
-      <g>
-        {/* Upper wick (from high to top of body) */}
-        <line
-          x1={centerX}
-          y1={highY}
-          x2={centerX}
-          y2={bodyTop}
-          stroke={color}
-          strokeWidth={1}
-        />
-        
-        {/* Lower wick (from bottom of body to low) */}
-        <line
-          x1={centerX}
-          y1={bodyBottom}
-          x2={centerX}
-          y2={lowY}
-          stroke={color}
-          strokeWidth={1}
-        />
-        
-        {/* Candle body - Professional brokerage style */}
-        <rect
-          x={centerX - candleWidth / 2}
-          y={bodyTop}
-          width={candleWidth}
-          height={bodyHeight}
-          fill={isGreen ? color : '#000000'} // Green solid, red hollow with black fill
-          stroke={color}
-          strokeWidth={isGreen ? 0 : 2} // No border for green, thick border for red
-        />
-
-        {/* Trade markers */}
-        {tradesAtTime.map((trade, idx) => {
-          const entryPriceY = y + ((high - trade.entryPrice) / priceRange) * height;
-          const entryColor = trade.type === 'CALL' ? '#10b981' : '#f59e0b';
-          const statusColor = trade.status === 'won' ? '#10b981' : 
-                             trade.status === 'lost' ? '#ef4444' : '#8b5cf6';
-          
+      <svg width={width} height={height} className="bg-background">
+        {/* Y-axis labels */}
+        {Array.from({ length: 6 }, (_, i) => {
+          const price = chartMax - (i * chartRange / 5);
+          const y = 20 + (i * (height - 60) / 5);
           return (
-            <g key={trade.id}>
-              {/* Entry marker */}
-              <circle
-                cx={centerX}
-                cy={entryPriceY}
-                r={3}
-                fill={entryColor}
-                stroke="white"
-                strokeWidth={1}
-              />
-              
-              {/* Direction arrow */}
-              <polygon
-                points={trade.type === 'CALL' 
-                  ? `${centerX - 4},${entryPriceY + 10} ${centerX},${entryPriceY + 6} ${centerX + 4},${entryPriceY + 10}`
-                  : `${centerX - 4},${entryPriceY - 10} ${centerX},${entryPriceY - 6} ${centerX + 4},${entryPriceY - 10}`
-                }
-                fill={entryColor}
-                stroke="white"
-                strokeWidth={0.5}
-              />
-              
-              {/* Status indicator */}
-              {trade.status !== 'active' && (
-                <circle
-                  cx={centerX + 8}
-                  cy={entryPriceY}
-                  r={2}
-                  fill={statusColor}
-                  stroke="white"
-                  strokeWidth={1}
-                />
-              )}
+            <g key={i}>
+              <line x1={45} y1={y} x2={width - 20} y2={y} stroke="#333" strokeWidth={0.5} opacity={0.3} />
+              <text x={40} y={y + 4} textAnchor="end" className="text-xs fill-muted-foreground">
+                ${price.toFixed(2)}
+              </text>
             </g>
           );
         })}
-      </g>
-    );
-  };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const isGreen = data.close >= data.open;
-      const change = data.close - data.open;
-      const changePercent = (change / data.open) * 100;
-      
-      const tradesAtTime = tradeEntries.filter(trade => 
-        Math.abs(trade.timestamp - data.timestamp) < 30000
-      );
+        {/* X-axis labels */}
+        {data.map((candle, index) => {
+          if (index % Math.max(1, Math.floor(data.length / 8)) === 0) {
+            const x = 50 + index * candleSpacing + candleSpacing / 2;
+            return (
+              <text key={index} x={x} y={height - 5} textAnchor="middle" className="text-xs fill-muted-foreground">
+                {candle.time}
+              </text>
+            );
+          }
+          return null;
+        })}
 
-      return (
-        <div className="bg-background border rounded-lg p-3 shadow-lg min-w-[200px]">
-          <p className="font-medium mb-2">{label}</p>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span>Abertura:</span>
-              <span className="font-mono">${data.open.toFixed(3)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Máxima:</span>
-              <span className="font-mono text-green-600">${data.high.toFixed(3)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Mínima:</span>
-              <span className="font-mono text-red-600">${data.low.toFixed(3)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Fechamento:</span>
-              <span className={`font-mono ${isGreen ? 'text-green-600' : 'text-red-600'}`}>
-                ${data.close.toFixed(3)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Variação:</span>
-              <span className={`font-mono ${isGreen ? 'text-green-600' : 'text-red-600'}`}>
-                {isGreen ? '+' : ''}{change.toFixed(3)} ({changePercent.toFixed(2)}%)
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Volume:</span>
-              <span className="font-mono">{data.volume.toLocaleString()}</span>
-            </div>
-          </div>
+        {/* Candlesticks */}
+        {data.map((candle, index) => {
+          const x = 50 + index * candleSpacing + candleSpacing / 2;
           
-          {tradesAtTime.length > 0 && (
-            <div className="border-t pt-2 mt-2">
-              <p className="text-xs font-medium mb-1">Entradas do Bot:</p>
-              {tradesAtTime.map(trade => (
-                <div key={trade.id} className="text-xs flex justify-between items-center">
-                  <span className={`px-1 rounded ${trade.type === 'CALL' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
-                    {trade.type} ${trade.amount}
-                  </span>
-                  <span className={`px-1 rounded text-xs ${
-                    trade.status === 'won' ? 'bg-green-100 text-green-800' :
-                    trade.status === 'lost' ? 'bg-red-100 text-red-800' :
-                    'bg-purple-100 text-purple-800'
-                  }`}>
-                    {trade.status === 'won' ? 'GANHOU' : 
-                     trade.status === 'lost' ? 'PERDEU' : 'ATIVO'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-    return null;
+          // Calculate Y positions
+          const highY = 20 + ((chartMax - candle.high) / chartRange) * (height - 60);
+          const lowY = 20 + ((chartMax - candle.low) / chartRange) * (height - 60);
+          const openY = 20 + ((chartMax - candle.open) / chartRange) * (height - 60);
+          const closeY = 20 + ((chartMax - candle.close) / chartRange) * (height - 60);
+
+          const isGreen = candle.close >= candle.open;
+          const bodyTop = Math.min(openY, closeY);
+          const bodyBottom = Math.max(openY, closeY);
+          const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
+
+          const greenColor = '#00c851';
+          const redColor = '#ff3547';
+          const color = isGreen ? greenColor : redColor;
+
+          // Find trades for this candle
+          const tradesAtTime = tradeEntries.filter(trade => 
+            Math.abs(trade.timestamp - candle.timestamp) < 30000
+          );
+
+          return (
+            <g key={candle.timestamp}>
+              {/* Upper wick */}
+              <line
+                x1={x}
+                y1={highY}
+                x2={x}
+                y2={bodyTop}
+                stroke={color}
+                strokeWidth={1.5}
+              />
+              
+              {/* Lower wick */}
+              <line
+                x1={x}
+                y1={bodyBottom}
+                x2={x}
+                y2={lowY}
+                stroke={color}
+                strokeWidth={1.5}
+              />
+              
+              {/* Candle body */}
+              <rect
+                x={x - candleWidth / 2}
+                y={bodyTop}
+                width={candleWidth}
+                height={bodyHeight}
+                fill={isGreen ? color : '#1a1a1a'}
+                stroke={color}
+                strokeWidth={isGreen ? 0 : 2}
+              />
+
+              {/* Trade markers */}
+              {tradesAtTime.map((trade) => {
+                const entryY = 20 + ((chartMax - trade.entryPrice) / chartRange) * (height - 60);
+                const entryColor = trade.type === 'CALL' ? '#10b981' : '#f59e0b';
+                
+                return (
+                  <g key={trade.id}>
+                    <circle
+                      cx={x}
+                      cy={entryY}
+                      r={3}
+                      fill={entryColor}
+                      stroke="white"
+                      strokeWidth={1}
+                    />
+                    <polygon
+                      points={trade.type === 'CALL' 
+                        ? `${x - 3},${entryY + 8} ${x},${entryY + 5} ${x + 3},${entryY + 8}`
+                        : `${x - 3},${entryY - 8} ${x},${entryY - 5} ${x + 3},${entryY - 8}`
+                      }
+                      fill={entryColor}
+                    />
+                  </g>
+                );
+              })}
+            </g>
+          );
+        })}
+      </svg>
+    );
   };
 
   // Zoom functions
@@ -371,7 +320,6 @@ const LiveCandlestickChart = () => {
     setZoomLevel(1);
   };
 
-  // Handle mouse wheel zoom
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     if (e.deltaY < 0) {
@@ -381,17 +329,7 @@ const LiveCandlestickChart = () => {
     }
   };
 
-  // Get visible candle data based on zoom
   const visibleCandleData = candleData.slice(-candleCount);
-  
-  // Calculate Y domain for visible data with padding and stability
-  const visiblePrices = visibleCandleData.flatMap(candle => [candle.high, candle.low]);
-  const dataMin = Math.min(...visiblePrices);
-  const dataMax = Math.max(...visiblePrices);
-  const range = dataMax - dataMin;
-  const padding = Math.max(range * 0.1, 1); // 10% padding or minimum 1
-  const yMin = dataMin - padding;
-  const yMax = dataMax + padding;
 
   return (
     <div className="space-y-4">
@@ -480,33 +418,9 @@ const LiveCandlestickChart = () => {
           <CardDescription>Visualização em tempo real estilo corretora</CardDescription>
         </CardHeader>
         <CardContent>
-          <div 
-            className="h-[500px] w-full cursor-crosshair" 
-            onWheel={handleWheel}
-          >
+          <div className="h-[500px] w-full cursor-crosshair" onWheel={handleWheel}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={visibleCandleData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                <XAxis 
-                  dataKey="time"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: '#666' }}
-                  interval="preserveStartEnd"
-                />
-                <YAxis 
-                  domain={[yMin, yMax]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: '#666' }}
-                  tickFormatter={(value) => `$${value.toFixed(2)}`}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar 
-                  dataKey="close" 
-                  shape={<CustomCandlestick />}
-                  fill="transparent"
-                />
-              </ComposedChart>
+              <CustomCandlestickChart data={visibleCandleData} width={800} height={500} />
             </ResponsiveContainer>
           </div>
         </CardContent>
