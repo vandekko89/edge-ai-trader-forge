@@ -203,20 +203,58 @@ const LiveCandlestickChart = () => {
       setConnectionError('');
       setSyncStatus('updating');
       
+      // Validate token format
+      if (!token || token.length < 10) {
+        throw new Error('Token inválido. O token deve ter pelo menos 10 caracteres.');
+      }
+      
+      if (!token.match(/^[a-zA-Z0-9_-]+$/)) {
+        throw new Error('Token contém caracteres inválidos. Use apenas letras, números, - e _');
+      }
+      
+      console.log('🔄 Iniciando conexão com Deriv API...');
+      
       const connection = new DerivAPI({ app_id: 1089 });
-      await connection.ping();
+      
+      // Test connection first
+      console.log('📡 Testando conexão...');
+      const pingResponse = await connection.ping();
+      if (pingResponse.error) {
+        throw new Error(`Erro de conexão: ${pingResponse.error.message}`);
+      }
       
       // Authorize with token
+      console.log('🔐 Autorizando token...');
       const authResponse = await connection.authorize(token);
-      console.log('🔗 Deriv Connected:', authResponse);
+      console.log('🔗 Resposta da autorização:', authResponse);
       
       if (authResponse.error) {
-        throw new Error(authResponse.error.message);
+        const errorMsg = authResponse.error.message;
+        if (errorMsg.includes('InvalidToken')) {
+          throw new Error('Token inválido ou expirado. Verifique se o token está correto.');
+        } else if (errorMsg.includes('restricted')) {
+          throw new Error('Token com permissões insuficientes. Use um token com permissão de leitura.');
+        } else {
+          throw new Error(`Erro de autorização: ${errorMsg}`);
+        }
+      }
+      
+      if (!authResponse.authorize) {
+        throw new Error('Falha na autorização. Resposta inválida da API.');
       }
       
       // Get account balance
+      console.log('💰 Obtendo saldo da conta...');
       const balanceResponse = await connection.balance();
-      console.log('💰 Deriv Balance:', balanceResponse);
+      console.log('💰 Resposta do saldo:', balanceResponse);
+      
+      if (balanceResponse.error) {
+        throw new Error(`Erro ao obter saldo: ${balanceResponse.error.message}`);
+      }
+      
+      if (!balanceResponse.balance) {
+        throw new Error('Não foi possível obter o saldo da conta.');
+      }
       
       setDerivConnection(connection);
       setRealAccountData(authResponse.authorize);
@@ -234,12 +272,26 @@ const LiveCandlestickChart = () => {
       setDerivToken(token);
       
       setSyncStatus('synced');
-      console.log('✅ Conectado à conta real da Deriv!');
+      console.log('✅ Conectado à conta real da Deriv com sucesso!');
       
     } catch (error: any) {
-      setConnectionError(error.message || 'Erro ao conectar com Deriv');
+      let errorMessage = 'Erro desconhecido ao conectar com Deriv';
+      
+      if (error.name === 'NetworkError' || error.message.includes('fetch')) {
+        errorMessage = 'Erro de rede. Verifique sua conexão com a internet.';
+      } else if (error.message.includes('WebSocket')) {
+        errorMessage = 'Erro de WebSocket. Tente novamente em alguns segundos.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setConnectionError(errorMessage);
       setSyncStatus('delayed');
-      console.error('❌ Erro de conexão:', error);
+      console.error('❌ Erro de conexão detalhado:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
     }
   };
 
