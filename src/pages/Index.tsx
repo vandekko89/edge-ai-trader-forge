@@ -14,11 +14,12 @@ import { StrategyManager } from "@/components/strategies/StrategyManager";
 import { TradingPanel } from "@/components/trading/TradingPanel";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { HomePage } from "@/components/home/HomePage";
+import { useBrokerConnection } from "@/hooks/useBrokerConnection";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [isTrading, setIsTrading] = useState(false);
-  const [selectedBroker, setSelectedBroker] = useState("Bybit"); // Corretora selecionada
+  const { connectionStatus } = useBrokerConnection();
 
   // Mock data for demo
   const userName = "João Silva"; // Nome do usuário
@@ -147,9 +148,9 @@ const Index = () => {
                     
                     {/* Status da conexão e operação */}
                     <div className="flex items-center space-x-3">
-                      <Badge variant="outline" className="border-success text-success">
-                        <div className="w-2 h-2 rounded-full bg-success animate-pulse mr-2" />
-                        Conectado à {selectedBroker}
+                      <Badge variant="outline" className={connectionStatus.isConnected ? "border-success text-success" : "border-destructive text-destructive"}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${connectionStatus.isConnected ? 'bg-success animate-pulse' : 'bg-destructive'}`} />
+                        {connectionStatus.isConnected ? `Conectado à ${connectionStatus.broker}` : 'Desconectado'}
                       </Badge>
                       <div className="w-px h-4 bg-border" />
                       <span className="text-sm font-medium text-muted-foreground">
@@ -167,12 +168,14 @@ const Index = () => {
                   </div>
 
                   <div className="flex items-center space-x-4">
-                    {/* Métricas rápidas - apenas quando operando */}
-                    {isTrading && (
+                    {/* Métricas rápidas - apenas quando conectado e operando */}
+                    {isTrading && connectionStatus.isConnected && (
                       <div className="hidden md:flex items-center space-x-6">
                         <div className="text-right">
                           <p className="text-sm text-muted-foreground">Banca</p>
-                          <p className="text-lg font-bold text-foreground">${bancaAtual.toLocaleString()}</p>
+                          <p className="text-lg font-bold text-foreground">
+                            ${connectionStatus.balance ? connectionStatus.balance.toLocaleString() : bancaAtual.toLocaleString()}
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-muted-foreground">Profit</p>
@@ -183,17 +186,31 @@ const Index = () => {
                     
                     {/* Botão Principal em Destaque */}
                     <Button
-                      onClick={() => setIsTrading(!isTrading)}
+                      onClick={() => {
+                        if (!connectionStatus.isConnected && !isTrading) {
+                          // Se não está conectado, redirecionar para settings
+                          setActiveTab("settings");
+                          return;
+                        }
+                        setIsTrading(!isTrading);
+                      }}
                       size="lg"
                       className={`
                         px-6 py-3 text-base font-bold transition-all duration-300 transform hover:scale-105
-                        ${isTrading 
-                          ? 'bg-danger hover:bg-danger/90 text-white shadow-lg shadow-danger/30' 
-                          : 'bg-success hover:bg-success/90 text-white shadow-lg shadow-success/30'
-                        }
-                      `}
+                        ${!connectionStatus.isConnected 
+                          ? 'bg-warning hover:bg-warning/90 text-white shadow-lg shadow-warning/30'
+                          : isTrading 
+                            ? 'bg-danger hover:bg-danger/90 text-white shadow-lg shadow-danger/30' 
+                            : 'bg-success hover:bg-success/90 text-white shadow-lg shadow-success/30'
+                      }
+                    `}
                     >
-                      {isTrading ? (
+                      {!connectionStatus.isConnected ? (
+                        <>
+                          <Settings className="h-5 w-5 mr-2" />
+                          CONFIGURAR
+                        </>
+                      ) : isTrading ? (
                         <>
                           <AlertTriangle className="h-5 w-5 mr-2" />
                           PARAR BOT

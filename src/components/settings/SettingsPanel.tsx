@@ -11,10 +11,11 @@ import { Separator } from "@/components/ui/separator";
 import { Key, Globe, TrendingUp, Newspaper, Brain, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DerivConnection from "@/components/deriv/DerivConnection";
+import { useBrokerConnection, BrokerConfig } from "@/hooks/useBrokerConnection";
 
 export const SettingsPanel = () => {
   const { toast } = useToast();
-  const [isConnected, setIsConnected] = useState(true);
+  const { connectionStatus, connectToBroker, disconnectBroker } = useBrokerConnection();
   const [apiSettings, setApiSettings] = useState({
     bybit_api_key: "••••••••••••••••",
     bybit_secret: "••••••••••••••••",
@@ -25,12 +26,17 @@ export const SettingsPanel = () => {
 
   const [brokerSettings, setBrokerSettings] = useState({
     selected_broker: "bybit",
-    bybit_api_key: "••••••••••••••••",
-    bybit_secret: "••••••••••••••••", 
-    binance_api_key: "••••••••••••••••",
-    binance_secret: "••••••••••••••••",
-    deriv_app_id: "••••••••••••••••",
-    deriv_token: "••••••••••••••••"
+    bybit_api_key: "",
+    bybit_secret: "", 
+    binance_api_key: "",
+    binance_secret: "",
+    deriv_app_id: "",
+    deriv_token: "",
+    iq_email: "",
+    iq_password: "",
+    mt_login: "",
+    mt_password: "",
+    mt_server: ""
   });
 
   const [indicatorSettings, setIndicatorSettings] = useState({
@@ -102,11 +108,22 @@ export const SettingsPanel = () => {
     });
   };
 
-  const saveBrokerSettings = () => {
-    toast({
-      title: "Broker Settings Saved", 
-      description: "Your broker configuration has been updated successfully.",
-    });
+  const saveBrokerSettings = async () => {
+    const config: BrokerConfig = {
+      name: brokerSettings.selected_broker,
+      apiKey: brokerSettings.selected_broker === 'bybit' ? brokerSettings.bybit_api_key :
+              brokerSettings.selected_broker === 'binance' ? brokerSettings.binance_api_key : undefined,
+      secret: brokerSettings.selected_broker === 'bybit' ? brokerSettings.bybit_secret :
+              brokerSettings.selected_broker === 'binance' ? brokerSettings.binance_secret : undefined,
+      appId: brokerSettings.selected_broker === 'deriv' ? brokerSettings.deriv_app_id : undefined,
+      token: brokerSettings.selected_broker === 'deriv' ? brokerSettings.deriv_token : undefined,
+      email: brokerSettings.selected_broker === 'iqoption' ? brokerSettings.iq_email : undefined,
+      password: brokerSettings.selected_broker === 'iqoption' ? brokerSettings.iq_password : undefined,
+      login: brokerSettings.selected_broker === 'metatrader' ? brokerSettings.mt_login : undefined,
+      server: brokerSettings.selected_broker === 'metatrader' ? brokerSettings.mt_server : undefined
+    };
+
+    await connectToBroker(config);
   };
 
   const testConnection = () => {
@@ -130,8 +147,8 @@ export const SettingsPanel = () => {
           <h2 className="text-2xl font-bold">API Settings</h2>
           <p className="text-muted-foreground">Configure broker connections and API credentials</p>
         </div>
-        <Badge variant={isConnected ? "default" : "destructive"} className="text-sm">
-          {isConnected ? "Connected" : "Disconnected"}
+        <Badge variant={connectionStatus.isConnected ? "default" : "destructive"} className="text-sm">
+          {connectionStatus.isConnected ? `Conectado - ${connectionStatus.broker}` : "Desconectado"}
         </Badge>
       </div>
 
@@ -296,6 +313,8 @@ export const SettingsPanel = () => {
                       <Input
                         id="iq-email"
                         type="email"
+                        value={brokerSettings.iq_email}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, iq_email: e.target.value }))}
                         className="mt-1"
                         placeholder="Digite seu email"
                       />
@@ -305,6 +324,8 @@ export const SettingsPanel = () => {
                       <Input
                         id="iq-password"
                         type="password"
+                        value={brokerSettings.iq_password}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, iq_password: e.target.value }))}
                         className="mt-1"
                         placeholder="Digite sua senha"
                       />
@@ -322,6 +343,8 @@ export const SettingsPanel = () => {
                       <Input
                         id="mt-login"
                         type="text"
+                        value={brokerSettings.mt_login}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, mt_login: e.target.value }))}
                         className="mt-1"
                         placeholder="Digite seu login"
                       />
@@ -331,6 +354,8 @@ export const SettingsPanel = () => {
                       <Input
                         id="mt-password"
                         type="password"
+                        value={brokerSettings.mt_password}
+                        onChange={(e) => setBrokerSettings(prev => ({ ...prev, mt_password: e.target.value }))}
                         className="mt-1"
                         placeholder="Digite sua senha"
                       />
@@ -341,6 +366,8 @@ export const SettingsPanel = () => {
                     <Input
                       id="mt-server"
                       type="text"
+                      value={brokerSettings.mt_server}
+                      onChange={(e) => setBrokerSettings(prev => ({ ...prev, mt_server: e.target.value }))}
                       className="mt-1"
                       placeholder="Ex: MetaQuotes-Demo"
                     />
@@ -352,11 +379,13 @@ export const SettingsPanel = () => {
 
               <div className="flex space-x-3">
                 <Button onClick={saveBrokerSettings} className="btn-trading">
-                  Salvar Configurações
+                  {connectionStatus.isConnected ? 'Reconectar' : 'Conectar'}
                 </Button>
-                <Button variant="outline" onClick={testConnection}>
-                  Testar Conexão
-                </Button>
+                {connectionStatus.isConnected && (
+                  <Button variant="destructive" onClick={disconnectBroker}>
+                    Desconectar
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

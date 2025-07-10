@@ -398,15 +398,18 @@ const LiveCandlestickChart = () => {
         }
       });
 
-      // Check for sync delays
+      // Check for sync delays - menos frequente
       setTimeout(() => {
         const syncTime = Date.now() - updateStart;
-        if (syncTime > 100) {
+        if (syncTime > 500) { // Aumentado threshold
           setSyncStatus('delayed');
-          console.warn('⚠️ Sync delay detected:', syncTime + 'ms');
+          // Log menos frequente
+          if (Math.random() > 0.9) { // Só 10% das vezes
+            console.warn('⚠️ Sync delay detected:', syncTime + 'ms');
+          }
         }
-      }, 50);
-    }, 600); // Ultra-fast 0.6 second updates for real testing
+      }, 100);
+    }, 2000); // Reduzido para 2 segundos
 
     return () => clearInterval(interval);
   }, [isLive]);
@@ -434,13 +437,16 @@ const LiveCandlestickChart = () => {
     const chartRange = chartMax - chartMin;
     const candleWidth = Math.max((width - 60) / data.length * 0.8, 3);
     const candleSpacing = (width - 60) / data.length;
-    console.log('Chart data:', {
-      dataLength: data.length,
-      minPrice: minPrice.toFixed(3),
-      maxPrice: maxPrice.toFixed(3),
-      chartMin: chartMin.toFixed(3),
-      chartMax: chartMax.toFixed(3)
-    });
+    // Log reduzido - apenas quando necessário
+    if (Math.random() > 0.95) { // Só 5% das vezes
+      console.log('Chart data:', {
+        dataLength: data.length,
+        minPrice: minPrice.toFixed(3),
+        maxPrice: maxPrice.toFixed(3),
+        chartMin: chartMin.toFixed(3),
+        chartMax: chartMax.toFixed(3)
+      });
+    }
     return <svg width={width} height={height} className="bg-background">
         {/* Y-axis labels */}
         {Array.from({
