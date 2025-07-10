@@ -28,9 +28,11 @@ interface TradeEntry {
 const LiveCandlestickChart = () => {
   const [candleData, setCandleData] = useState<CandleData[]>([]);
   const [tradeEntries, setTradeEntries] = useState<TradeEntry[]>([]);
-  const [isLive, setIsLive] = useState(false);
+  const [isLive, setIsLive] = useState(true); // Start in live mode for real testing
   const [zoomLevel, setZoomLevel] = useState(1);
   const [candleCount, setCandleCount] = useState(50);
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'updating' | 'delayed'>('synced');
 
   // Generate initial candlestick data
   useEffect(() => {
@@ -101,58 +103,103 @@ const LiveCandlestickChart = () => {
     generateCandleData();
   }, []);
 
-  // Live update simulation
+  // Real-time synchronized live updates
   useEffect(() => {
     if (!isLive) return;
 
     const interval = setInterval(() => {
+      const updateStart = Date.now();
+      setSyncStatus('updating');
+      
       setCandleData(prev => {
         const lastCandle = prev[prev.length - 1];
         const now = Date.now();
         const timeDiff = now - lastCandle.timestamp;
         
+        // Real-time price simulation with higher volatility for testing
         if (timeDiff >= 60000) {
+          // New candle every minute
+          const volatility = (Math.random() - 0.5) * 0.12; // 12% max volatility for testing
           const newCandle: CandleData = {
             time: new Date(now).toLocaleTimeString('pt-BR', { 
               hour: '2-digit', 
-              minute: '2-digit' 
+              minute: '2-digit',
+              second: '2-digit'
             }),
             timestamp: now,
             open: lastCandle.close,
-            high: lastCandle.close * (1 + Math.random() * 0.01),
-            low: lastCandle.close * (1 - Math.random() * 0.01),
-            close: lastCandle.close * (1 + (Math.random() - 0.5) * 0.015),
-            volume: Math.floor(Math.random() * 1000) + 500
+            high: lastCandle.close * (1 + Math.max(0, volatility) + Math.random() * 0.02),
+            low: lastCandle.close * (1 + Math.min(0, volatility) - Math.random() * 0.02),
+            close: lastCandle.close * (1 + volatility),
+            volume: Math.floor(Math.random() * 2000) + 800
           };
           
+          console.log('🕐 New Candle:', {
+            time: newCandle.time,
+            price: newCandle.close.toFixed(3),
+            change: ((newCandle.close - newCandle.open) / newCandle.open * 100).toFixed(2) + '%',
+            syncTime: Date.now() - updateStart + 'ms'
+          });
+
           const newData = [...prev.slice(1), newCandle];
           
-          if (Math.random() > 0.8) {
+          // Generate trade entries with higher frequency for testing
+          if (Math.random() > 0.7) {
             const newTrade: TradeEntry = {
               id: `trade-${now}`,
               timestamp: now,
               entryPrice: newCandle.close,
               type: Math.random() > 0.5 ? 'CALL' : 'PUT',
-              amount: Math.floor(Math.random() * 50) + 10,
+              amount: Math.floor(Math.random() * 100) + 20,
               status: 'active'
             };
+            
+            console.log('🎯 New Trade:', {
+              type: newTrade.type,
+              price: newTrade.entryPrice.toFixed(3),
+              amount: newTrade.amount
+            });
             
             setTradeEntries(prevTrades => [newTrade, ...prevTrades.slice(0, 19)]);
           }
           
+          setLastUpdateTime(now);
+          setSyncStatus('synced');
           return newData;
         } else {
+          // Update current candle in real-time
           const updatedCandle = { ...lastCandle };
-          const priceChange = (Math.random() - 0.5) * 0.005;
-          updatedCandle.close = updatedCandle.close * (1 + priceChange);
-          updatedCandle.high = Math.max(updatedCandle.high, updatedCandle.close);
-          updatedCandle.low = Math.min(updatedCandle.low, updatedCandle.close);
-          updatedCandle.volume += Math.floor(Math.random() * 10);
+          const microChange = (Math.random() - 0.5) * 0.008; // Smaller micro movements
+          const newClose = updatedCandle.close * (1 + microChange);
           
+          updatedCandle.close = newClose;
+          updatedCandle.high = Math.max(updatedCandle.high, newClose);
+          updatedCandle.low = Math.min(updatedCandle.low, newClose);
+          updatedCandle.volume += Math.floor(Math.random() * 15);
+          
+          // Update timestamp for current candle
+          updatedCandle.time = new Date(now).toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          
+          setLastUpdateTime(now);
+          setSyncStatus('synced');
           return [...prev.slice(0, -1), updatedCandle];
         }
       });
-    }, 800); // Update every 0.8 seconds for precise real-time analysis
+
+      // Check for sync delays
+      setTimeout(() => {
+        const syncTime = Date.now() - updateStart;
+        if (syncTime > 100) {
+          setSyncStatus('delayed');
+          console.warn('⚠️ Sync delay detected:', syncTime + 'ms');
+        }
+      }, 50);
+      
+    }, 600); // Ultra-fast 0.6 second updates for real testing
 
     return () => clearInterval(interval);
   }, [isLive]);
@@ -354,12 +401,29 @@ const LiveCandlestickChart = () => {
             )}
           </Button>
           
-          <Badge variant={isLive ? "default" : "secondary"}>
-            {isLive ? "AO VIVO" : "HISTÓRICO"}
+          <Badge variant={isLive ? "default" : "secondary"} className="flex items-center space-x-1">
+            <div className={`w-2 h-2 rounded-full ${
+              syncStatus === 'synced' ? 'bg-green-500 animate-pulse' :
+              syncStatus === 'updating' ? 'bg-yellow-500 animate-spin' :
+              'bg-red-500'
+            }`} />
+            <span>{isLive ? "AO VIVO" : "HISTÓRICO"}</span>
           </Badge>
           
-          <div className="text-sm text-muted-foreground">
-            R_50 • 1M
+          <div className="text-sm text-muted-foreground flex items-center space-x-2">
+            <span>R_50 • 1M</span>
+            {isLive && (
+              <>
+                <span>•</span>
+                <span className="text-xs">
+                  Sync: {syncStatus === 'synced' ? '✓' : syncStatus === 'updating' ? '⟳' : '⚠'}
+                </span>
+                <span>•</span>
+                <span className="text-xs">
+                  {Math.round((Date.now() - lastUpdateTime) / 1000)}s
+                </span>
+              </>
+            )}
           </div>
 
           {/* Zoom Controls */}
