@@ -67,18 +67,22 @@ const Index = () => {
               />
             </div>
 
+            {/* Barra de Probabilidade */}
+            <div className="bg-card rounded-lg p-4 mb-6 border border-border">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Probabilidade Atual</span>
+                <div className="flex items-center space-x-3">
+                  <Badge variant="outline" className="border-primary text-primary">
+                    85.7% CALL
+                  </Badge>
+                  <span className="text-2xl font-bold text-primary">EUR/USD</span>
+                </div>
+              </div>
+            </div>
+
             {/* Equity Curve Chart - Full Width */}
             <Card className="trading-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <span>Equity Curve</span>
-                </CardTitle>
-                <CardDescription>
-                  Portfolio performance over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <EquityCurveChart />
               </CardContent>
             </Card>
