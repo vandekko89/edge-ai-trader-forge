@@ -13,9 +13,10 @@ import { AIAnalysis } from "@/components/dashboard/AIAnalysis";
 import { StrategyManager } from "@/components/strategies/StrategyManager";
 import { TradingPanel } from "@/components/trading/TradingPanel";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { HomePage } from "@/components/home/HomePage";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("home");
   const [isTrading, setIsTrading] = useState(false);
 
   // Mock data for demo
@@ -27,6 +28,8 @@ const Index = () => {
 
   const renderActiveContent = () => {
     switch (activeTab) {
+      case "home":
+        return <HomePage />;
       case "dashboard":
         return (
           <div className="space-y-6">
@@ -123,62 +126,68 @@ const Index = () => {
         
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-            <div className="container mx-auto px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <Brain className="h-8 w-8 text-primary" />
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                      EdgeAIEngine
-                    </h1>
+          {/* Header - Only show when not on home page */}
+          {activeTab !== "home" && (
+            <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+              <div className="container mx-auto px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Brain className="h-8 w-8 text-primary" />
+                      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                        EdgeAIEngine
+                      </h1>
+                    </div>
+                    
+                    {/* Status da conexão e operação */}
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="border-success text-success">
+                        Conectado
+                      </Badge>
+                      {isTrading && (
+                        <Badge variant="outline" className="border-warning text-warning animate-pulse">
+                          Operando
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                  <Badge variant="outline" className="border-success text-success">
-                    Live Trading
-                  </Badge>
-                </div>
 
-                <div className="flex items-center space-x-4">
-                  <div className="hidden md:flex items-center space-x-6">
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Banca Atual</p>
-                      <p className="text-lg font-bold text-foreground">${bancaAtual.toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Profit</p>
-                      <p className="text-lg font-bold profit">+${profit.toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Win/Loss</p>
-                      <p className="text-lg font-bold text-foreground">{wins}/{losses}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Taxa de Acerto</p>
-                      <p className="text-lg font-bold text-success">{taxaAcerto}%</p>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    onClick={() => setIsTrading(!isTrading)}
-                    className={`btn-trading ${isTrading ? 'bg-danger' : ''}`}
-                  >
-                    {isTrading ? (
-                      <>
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Stop Trading
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-4 w-4 mr-2" />
-                        Start Trading
-                      </>
+                  <div className="flex items-center space-x-4">
+                    {/* Métricas rápidas - apenas quando operando */}
+                    {isTrading && (
+                      <div className="hidden md:flex items-center space-x-6">
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Banca</p>
+                          <p className="text-lg font-bold text-foreground">${bancaAtual.toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Profit</p>
+                          <p className="text-lg font-bold profit">+${profit.toLocaleString()}</p>
+                        </div>
+                      </div>
                     )}
-                  </Button>
+                    
+                    <Button
+                      onClick={() => setIsTrading(!isTrading)}
+                      className={`btn-trading ${isTrading ? 'bg-danger' : ''}`}
+                    >
+                      {isTrading ? (
+                        <>
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Parar
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-4 w-4 mr-2" />
+                          Iniciar
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </header>
+            </header>
+          )}
 
           {/* Page Content */}
           <main className="flex-1 container mx-auto px-4 py-6">

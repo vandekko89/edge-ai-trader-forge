@@ -1,4 +1,4 @@
-import { Brain, TrendingUp, Target, BarChart3, Activity, Settings } from "lucide-react";
+import { Brain, TrendingUp, Target, BarChart3, Activity, Settings, Home } from "lucide-react";
 
 import {
   Sidebar,
@@ -12,6 +12,12 @@ import {
 } from "@/components/ui/sidebar";
 
 const navigationItems = [
+  { 
+    id: "home", 
+    icon: Home, 
+    label: "Home",
+    tooltip: "Página inicial e login"
+  },
   { 
     id: "dashboard", 
     icon: BarChart3, 
