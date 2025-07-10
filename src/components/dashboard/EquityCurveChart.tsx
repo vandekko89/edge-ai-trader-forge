@@ -162,9 +162,25 @@ const LiveCandlestickChart = () => {
 
     const { open, high, low, close, timestamp } = payload;
     const isGreen = close >= open;
-    const color = isGreen ? '#10b981' : '#ef4444';
-    const bodyHeight = Math.abs(close - open) / (high - low) * height;
-    const bodyY = y + ((high - Math.max(open, close)) / (high - low)) * height;
+    const color = isGreen ? '#22c55e' : '#ef4444';
+    
+    // Calculate Y positions based on price values relative to chart area
+    const priceRange = high - low;
+    if (priceRange === 0) return null;
+    
+    // Y positions for each price level
+    const highY = y;
+    const lowY = y + height;
+    const openY = y + ((high - open) / priceRange) * height;
+    const closeY = y + ((high - close) / priceRange) * height;
+    
+    // Body dimensions
+    const bodyTop = Math.min(openY, closeY);
+    const bodyBottom = Math.max(openY, closeY);
+    const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
+    
+    const candleWidth = Math.max(width * 0.7, 3);
+    const centerX = x + width / 2;
     
     // Find trades at this time
     const tradesAtTime = tradeEntries.filter(trade => 
@@ -173,30 +189,40 @@ const LiveCandlestickChart = () => {
 
     return (
       <g>
-        {/* High-Low line (wick) */}
+        {/* Upper wick (from high to top of body) */}
         <line
-          x1={x + width / 2}
-          y1={y}
-          x2={x + width / 2}
-          y2={y + height}
+          x1={centerX}
+          y1={highY}
+          x2={centerX}
+          y2={bodyTop}
           stroke={color}
           strokeWidth={1}
         />
         
-        {/* Open-Close body */}
+        {/* Lower wick (from bottom of body to low) */}
+        <line
+          x1={centerX}
+          y1={bodyBottom}
+          x2={centerX}
+          y2={lowY}
+          stroke={color}
+          strokeWidth={1}
+        />
+        
+        {/* Candle body */}
         <rect
-          x={x + width * 0.2}
-          y={bodyY}
-          width={width * 0.6}
-          height={Math.max(bodyHeight, 1)}
+          x={centerX - candleWidth / 2}
+          y={bodyTop}
+          width={candleWidth}
+          height={bodyHeight}
           fill={isGreen ? color : 'transparent'}
           stroke={color}
-          strokeWidth={isGreen ? 0 : 1}
+          strokeWidth={1}
         />
 
         {/* Trade markers */}
         {tradesAtTime.map((trade, idx) => {
-          const markerY = bodyY + bodyHeight / 2;
+          const entryPriceY = y + ((high - trade.entryPrice) / priceRange) * height;
           const entryColor = trade.type === 'CALL' ? '#10b981' : '#f59e0b';
           const statusColor = trade.status === 'won' ? '#10b981' : 
                              trade.status === 'lost' ? '#ef4444' : '#8b5cf6';
@@ -205,8 +231,8 @@ const LiveCandlestickChart = () => {
             <g key={trade.id}>
               {/* Entry marker */}
               <circle
-                cx={x + width / 2}
-                cy={markerY}
+                cx={centerX}
+                cy={entryPriceY}
                 r={3}
                 fill={entryColor}
                 stroke="white"
@@ -216,8 +242,8 @@ const LiveCandlestickChart = () => {
               {/* Direction arrow */}
               <polygon
                 points={trade.type === 'CALL' 
-                  ? `${x + width/2 - 3},${markerY + 8} ${x + width/2},${markerY + 5} ${x + width/2 + 3},${markerY + 8}`
-                  : `${x + width/2 - 3},${markerY - 8} ${x + width/2},${markerY - 5} ${x + width/2 + 3},${markerY - 8}`
+                  ? `${centerX - 4},${entryPriceY + 10} ${centerX},${entryPriceY + 6} ${centerX + 4},${entryPriceY + 10}`
+                  : `${centerX - 4},${entryPriceY - 10} ${centerX},${entryPriceY - 6} ${centerX + 4},${entryPriceY - 10}`
                 }
                 fill={entryColor}
                 stroke="white"
@@ -226,15 +252,13 @@ const LiveCandlestickChart = () => {
               
               {/* Status indicator */}
               {trade.status !== 'active' && (
-                <rect
-                  x={x + width/2 - 2}
-                  y={markerY - 12}
-                  width={4}
-                  height={4}
+                <circle
+                  cx={centerX + 8}
+                  cy={entryPriceY}
+                  r={2}
                   fill={statusColor}
                   stroke="white"
-                  strokeWidth={0.5}
-                  transform={`rotate(45 ${x + width/2} ${markerY - 10})`}
+                  strokeWidth={1}
                 />
               )}
             </g>
