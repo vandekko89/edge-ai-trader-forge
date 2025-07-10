@@ -78,7 +78,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[500px] mb-8">
+          <TabsList className="grid w-full grid-cols-6 lg:w-[600px] mb-8">
             <TabsTrigger value="dashboard" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -86,6 +86,10 @@ const Index = () => {
             <TabsTrigger value="ai" className="flex items-center space-x-2">
               <Brain className="h-4 w-4" />
               <span className="hidden sm:inline">IA</span>
+            </TabsTrigger>
+            <TabsTrigger value="backtest" className="flex items-center space-x-2">
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Backtest</span>
             </TabsTrigger>
             <TabsTrigger value="strategies" className="flex items-center space-x-2">
               <Target className="h-4 w-4" />
@@ -134,47 +138,42 @@ const Index = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Equity Curve Chart */}
-              <div className="lg:col-span-2">
-                <Card className="trading-card">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <TrendingUp className="h-5 w-5 text-primary" />
-                      <span>Equity Curve</span>
-                    </CardTitle>
-                    <CardDescription>
-                      Portfolio performance over time
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <EquityCurveChart />
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Backtest Controls */}
-              <div>
-                <Card className="trading-card">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Brain className="h-5 w-5 text-primary" />
-                      <span>Backtest Engine</span>
-                    </CardTitle>
-                    <CardDescription>
-                      Test strategies with historical data
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <BacktestControls />
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            {/* Equity Curve Chart - Full Width */}
+            <Card className="trading-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <span>Equity Curve</span>
+                </CardTitle>
+                <CardDescription>
+                  Portfolio performance over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EquityCurveChart />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="ai">
             <AIAnalysis />
+          </TabsContent>
+
+          <TabsContent value="backtest">
+            <Card className="trading-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Brain className="h-5 w-5 text-primary" />
+                  <span>Backtest Engine</span>
+                </CardTitle>
+                <CardDescription>
+                  Test strategies with historical data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BacktestControls />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="strategies">
