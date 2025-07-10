@@ -374,10 +374,14 @@ const LiveCandlestickChart = () => {
   // Get visible candle data based on zoom
   const visibleCandleData = candleData.slice(-candleCount);
   
-  // Calculate Y domain for visible data
+  // Calculate Y domain for visible data with padding and stability
   const visiblePrices = visibleCandleData.flatMap(candle => [candle.high, candle.low]);
-  const yMin = Math.min(...visiblePrices) - 0.5;
-  const yMax = Math.max(...visiblePrices) + 0.5;
+  const dataMin = Math.min(...visiblePrices);
+  const dataMax = Math.max(...visiblePrices);
+  const range = dataMax - dataMin;
+  const padding = Math.max(range * 0.1, 1); // 10% padding or minimum 1
+  const yMin = dataMin - padding;
+  const yMax = dataMax + padding;
 
   return (
     <div className="space-y-4">
@@ -480,7 +484,7 @@ const LiveCandlestickChart = () => {
                   interval="preserveStartEnd"
                 />
                 <YAxis 
-                  domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                  domain={[yMin, yMax]}
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 11, fill: '#666' }}
