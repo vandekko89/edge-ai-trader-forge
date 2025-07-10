@@ -1,60 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Square, TrendingUp, Activity } from "lucide-react";
+import { Play, Square, TrendingUp } from "lucide-react";
 
 interface CandleData {
   time: string;
   timestamp: number;
-  price: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
   volume: number;
 }
 
 interface TradeEntry {
   id: string;
   timestamp: number;
-  price: number;
+  entryPrice: number;
+  exitPrice?: number;
   type: 'CALL' | 'PUT';
   amount: number;
   status: 'active' | 'won' | 'lost';
 }
 
-const LiveChart = () => {
+const LiveCandlestickChart = () => {
   const [candleData, setCandleData] = useState<CandleData[]>([]);
   const [tradeEntries, setTradeEntries] = useState<TradeEntry[]>([]);
   const [isLive, setIsLive] = useState(false);
 
-  // Generate initial data
+  // Generate initial candlestick data
   useEffect(() => {
-    const generateData = () => {
+    const generateCandleData = () => {
       const data: CandleData[] = [];
       const trades: TradeEntry[] = [];
-      let basePrice = 100;
+      let basePrice = 500.50;
       
-      for (let i = 0; i < 30; i++) {
-        const timestamp = Date.now() - (30 - i) * 60000;
-        basePrice += (Math.random() - 0.5) * 2;
+      for (let i = 0; i < 100; i++) {
+        const timestamp = Date.now() - (100 - i) * 60000; // 1 minute candles
+        
+        // Generate OHLC data
+        const open = basePrice;
+        const volatility = (Math.random() - 0.5) * 0.02; // 2% max change
+        const close = open * (1 + volatility);
+        const high = Math.max(open, close) * (1 + Math.random() * 0.01);
+        const low = Math.min(open, close) * (1 - Math.random() * 0.01);
         
         data.push({
-          time: new Date(timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          time: new Date(timestamp).toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
           timestamp,
-          price: basePrice,
-          volume: Math.floor(Math.random() * 1000) + 100
+          open,
+          high,
+          low,
+          close,
+          volume: Math.floor(Math.random() * 1000) + 500
         });
 
-        // Add trade entries
-        if (Math.random() > 0.8) {
+        basePrice = close;
+
+        // Add some trade entries
+        if (Math.random() > 0.85) {
           const tradeType = Math.random() > 0.5 ? 'CALL' : 'PUT';
-          trades.push({
+          const trade: TradeEntry = {
             id: `trade-${i}`,
             timestamp,
-            price: basePrice,
+            entryPrice: close,
             type: tradeType,
-            amount: 10,
-            status: Math.random() > 0.6 ? 'won' : 'lost'
-          });
+            amount: Math.floor(Math.random() * 50) + 10,
+            status: 'active'
+          };
+
+          // Simulate trade results for older entries
+          if (i < 95) {
+            const futureCandle = data[i + 5];
+            if (futureCandle) {
+              const result = (tradeType === 'CALL' && futureCandle.close > close) ||
+                           (tradeType === 'PUT' && futureCandle.close < close);
+              trade.status = result ? 'won' : 'lost';
+              trade.exitPrice = futureCandle.close;
+            }
+          }
+
+          trades.push(trade);
         }
       }
       
@@ -62,74 +93,217 @@ const LiveChart = () => {
       setTradeEntries(trades);
     };
 
-    generateData();
+    generateCandleData();
   }, []);
 
-  // Live update
+  // Live update simulation
   useEffect(() => {
     if (!isLive) return;
 
     const interval = setInterval(() => {
       setCandleData(prev => {
-        const lastPoint = prev[prev.length - 1];
-        const newPrice = lastPoint.price + (Math.random() - 0.5) * 1;
+        const lastCandle = prev[prev.length - 1];
+        const now = Date.now();
+        const timeDiff = now - lastCandle.timestamp;
         
-        const newPoint: CandleData = {
-          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          timestamp: Date.now(),
-          price: newPrice,
-          volume: Math.floor(Math.random() * 1000) + 100
-        };
-        
-        const newData = [...prev.slice(1), newPoint];
-        
-        // Add random trade
-        if (Math.random() > 0.9) {
-          const newTrade: TradeEntry = {
-            id: `trade-${Date.now()}`,
-            timestamp: Date.now(),
-            price: newPrice,
-            type: Math.random() > 0.5 ? 'CALL' : 'PUT',
-            amount: 10,
-            status: 'active'
+        if (timeDiff >= 60000) { // New candle every minute
+          const newCandle: CandleData = {
+            time: new Date(now).toLocaleTimeString('pt-BR', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }),
+            timestamp: now,
+            open: lastCandle.close,
+            high: lastCandle.close * (1 + Math.random() * 0.01),
+            low: lastCandle.close * (1 - Math.random() * 0.01),
+            close: lastCandle.close * (1 + (Math.random() - 0.5) * 0.015),
+            volume: Math.floor(Math.random() * 1000) + 500
           };
           
-          setTradeEntries(prevTrades => [newTrade, ...prevTrades.slice(0, 9)]);
+          // Keep only last 100 candles
+          const newData = [...prev.slice(1), newCandle];
+          
+          // Add new trade entry occasionally
+          if (Math.random() > 0.8) {
+            const newTrade: TradeEntry = {
+              id: `trade-${now}`,
+              timestamp: now,
+              entryPrice: newCandle.close,
+              type: Math.random() > 0.5 ? 'CALL' : 'PUT',
+              amount: Math.floor(Math.random() * 50) + 10,
+              status: 'active'
+            };
+            
+            setTradeEntries(prevTrades => [newTrade, ...prevTrades.slice(0, 19)]);
+          }
+          
+          return newData;
+        } else {
+          // Update current candle
+          const updatedCandle = { ...lastCandle };
+          const priceChange = (Math.random() - 0.5) * 0.005;
+          updatedCandle.close = updatedCandle.close * (1 + priceChange);
+          updatedCandle.high = Math.max(updatedCandle.high, updatedCandle.close);
+          updatedCandle.low = Math.min(updatedCandle.low, updatedCandle.close);
+          updatedCandle.volume += Math.floor(Math.random() * 10);
+          
+          return [...prev.slice(0, -1), updatedCandle];
         }
-        
-        return newData;
       });
-    }, 2000);
+    }, 1500); // Update every 1.5 seconds
 
     return () => clearInterval(interval);
   }, [isLive]);
 
+  // Custom Candlestick component
+  const CustomCandlestick = (props: any) => {
+    const { x, y, width, height, payload } = props;
+    if (!payload) return null;
+
+    const { open, high, low, close, timestamp } = payload;
+    const isGreen = close >= open;
+    const color = isGreen ? '#10b981' : '#ef4444';
+    const bodyHeight = Math.abs(close - open) / (high - low) * height;
+    const bodyY = y + ((high - Math.max(open, close)) / (high - low)) * height;
+    
+    // Find trades at this time
+    const tradesAtTime = tradeEntries.filter(trade => 
+      Math.abs(trade.timestamp - timestamp) < 30000
+    );
+
+    return (
+      <g>
+        {/* High-Low line (wick) */}
+        <line
+          x1={x + width / 2}
+          y1={y}
+          x2={x + width / 2}
+          y2={y + height}
+          stroke={color}
+          strokeWidth={1}
+        />
+        
+        {/* Open-Close body */}
+        <rect
+          x={x + width * 0.2}
+          y={bodyY}
+          width={width * 0.6}
+          height={Math.max(bodyHeight, 1)}
+          fill={isGreen ? color : 'transparent'}
+          stroke={color}
+          strokeWidth={isGreen ? 0 : 1}
+        />
+
+        {/* Trade markers */}
+        {tradesAtTime.map((trade, idx) => {
+          const markerY = bodyY + bodyHeight / 2;
+          const entryColor = trade.type === 'CALL' ? '#10b981' : '#f59e0b';
+          const statusColor = trade.status === 'won' ? '#10b981' : 
+                             trade.status === 'lost' ? '#ef4444' : '#8b5cf6';
+          
+          return (
+            <g key={trade.id}>
+              {/* Entry marker */}
+              <circle
+                cx={x + width / 2}
+                cy={markerY}
+                r={3}
+                fill={entryColor}
+                stroke="white"
+                strokeWidth={1}
+              />
+              
+              {/* Direction arrow */}
+              <polygon
+                points={trade.type === 'CALL' 
+                  ? `${x + width/2 - 3},${markerY + 8} ${x + width/2},${markerY + 5} ${x + width/2 + 3},${markerY + 8}`
+                  : `${x + width/2 - 3},${markerY - 8} ${x + width/2},${markerY - 5} ${x + width/2 + 3},${markerY - 8}`
+                }
+                fill={entryColor}
+                stroke="white"
+                strokeWidth={0.5}
+              />
+              
+              {/* Status indicator */}
+              {trade.status !== 'active' && (
+                <rect
+                  x={x + width/2 - 2}
+                  y={markerY - 12}
+                  width={4}
+                  height={4}
+                  fill={statusColor}
+                  stroke="white"
+                  strokeWidth={0.5}
+                  transform={`rotate(45 ${x + width/2} ${markerY - 10})`}
+                />
+              )}
+            </g>
+          );
+        })}
+      </g>
+    );
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
-      const relatedTrades = tradeEntries.filter(trade => 
-        Math.abs(trade.timestamp - data.timestamp) < 120000
+      const isGreen = data.close >= data.open;
+      const change = data.close - data.open;
+      const changePercent = (change / data.open) * 100;
+      
+      const tradesAtTime = tradeEntries.filter(trade => 
+        Math.abs(trade.timestamp - data.timestamp) < 30000
       );
 
       return (
-        <div className="bg-background border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{label}</p>
-          <p className="text-sm">Preço: <span className="font-mono">${data.price.toFixed(2)}</span></p>
-          <p className="text-sm">Volume: <span className="font-mono">{data.volume}</span></p>
+        <div className="bg-background border rounded-lg p-3 shadow-lg min-w-[200px]">
+          <p className="font-medium mb-2">{label}</p>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span>Abertura:</span>
+              <span className="font-mono">${data.open.toFixed(3)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Máxima:</span>
+              <span className="font-mono text-green-600">${data.high.toFixed(3)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Mínima:</span>
+              <span className="font-mono text-red-600">${data.low.toFixed(3)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Fechamento:</span>
+              <span className={`font-mono ${isGreen ? 'text-green-600' : 'text-red-600'}`}>
+                ${data.close.toFixed(3)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Variação:</span>
+              <span className={`font-mono ${isGreen ? 'text-green-600' : 'text-red-600'}`}>
+                {isGreen ? '+' : ''}{change.toFixed(3)} ({changePercent.toFixed(2)}%)
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Volume:</span>
+              <span className="font-mono">{data.volume.toLocaleString()}</span>
+            </div>
+          </div>
           
-          {relatedTrades.length > 0 && (
+          {tradesAtTime.length > 0 && (
             <div className="border-t pt-2 mt-2">
-              <p className="text-xs font-medium">Trades:</p>
-              {relatedTrades.map(trade => (
-                <div key={trade.id} className="text-xs flex justify-between">
-                  <span className={trade.type === 'CALL' ? 'text-green-500' : 'text-red-500'}>
+              <p className="text-xs font-medium mb-1">Entradas do Bot:</p>
+              {tradesAtTime.map(trade => (
+                <div key={trade.id} className="text-xs flex justify-between items-center">
+                  <span className={`px-1 rounded ${trade.type === 'CALL' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
                     {trade.type} ${trade.amount}
                   </span>
-                  <span className={
-                    trade.status === 'won' ? 'text-green-500' :
-                    trade.status === 'lost' ? 'text-red-500' : 'text-yellow-500'
-                  }>
-                    {trade.status.toUpperCase()}
+                  <span className={`px-1 rounded text-xs ${
+                    trade.status === 'won' ? 'bg-green-100 text-green-800' :
+                    trade.status === 'lost' ? 'bg-red-100 text-red-800' :
+                    'bg-purple-100 text-purple-800'
+                  }`}>
+                    {trade.status === 'won' ? 'GANHOU' : 
+                     trade.status === 'lost' ? 'PERDEU' : 'ATIVO'}
                   </span>
                 </div>
               ))}
@@ -165,128 +339,124 @@ const LiveChart = () => {
           </Button>
           
           <Badge variant={isLive ? "default" : "secondary"}>
-            {isLive ? "AO VIVO" : "DEMO"}
+            {isLive ? "AO VIVO" : "HISTÓRICO"}
           </Badge>
+          
+          <div className="text-sm text-muted-foreground">
+            R_50 • 1M
+          </div>
         </div>
 
         <div className="text-sm text-muted-foreground">
-          Último preço: ${candleData[candleData.length - 1]?.price.toFixed(2) || '0.00'}
+          {candleData.length > 0 && (
+            <>
+              Último: ${candleData[candleData.length - 1]?.close.toFixed(3)} 
+              <span className={
+                candleData[candleData.length - 1]?.close >= candleData[candleData.length - 1]?.open 
+                  ? 'text-green-600 ml-2' : 'text-red-600 ml-2'
+              }>
+                {((candleData[candleData.length - 1]?.close - candleData[candleData.length - 1]?.open) / candleData[candleData.length - 1]?.open * 100).toFixed(2)}%
+              </span>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Price Chart */}
+      {/* Candlestick Chart */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            <span>Gráfico de Preços</span>
+            <span>Gráfico de Candlesticks</span>
           </CardTitle>
-          <CardDescription>Movimento de preços em tempo real</CardDescription>
+          <CardDescription>Visualização em tempo real estilo corretora</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] w-full">
+          <div className="h-[500px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={candleData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <ComposedChart data={candleData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <XAxis 
-                  dataKey="time" 
-                  tick={{ fontSize: 12 }}
+                  dataKey="time"
                   axisLine={false}
                   tickLine={false}
+                  tick={{ fontSize: 11, fill: '#666' }}
+                  interval="preserveStartEnd"
                 />
                 <YAxis 
-                  tick={{ fontSize: 12 }}
+                  domain={['dataMin - 0.5', 'dataMax + 0.5']}
                   axisLine={false}
                   tickLine={false}
-                  domain={['dataMin - 2', 'dataMax + 2']}
+                  tick={{ fontSize: 11, fill: '#666' }}
+                  tickFormatter={(value) => `$${value.toFixed(2)}`}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Line 
-                  type="monotone" 
-                  dataKey="price" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, fill: "hsl(var(--primary))" }}
-                />
-              </LineChart>
+                
+                {/* Render custom candlesticks */}
+                {candleData.map((candle, index) => (
+                  <CustomCandlestick
+                    key={index}
+                    x={(index / candleData.length) * 100 + '%'}
+                    y={0}
+                    width={100 / candleData.length + '%'}
+                    height="100%"
+                    payload={candle}
+                  />
+                ))}
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      {/* Volume Chart */}
+      {/* Recent Entries */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Activity className="h-5 w-5 text-primary" />
-            <span>Volume</span>
-          </CardTitle>
+          <CardTitle>Entradas Recentes do Bot</CardTitle>
+          <CardDescription>Últimas operações executadas automaticamente</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[150px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={candleData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis 
-                  dataKey="time" 
-                  tick={{ fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Bar 
-                  dataKey="volume" 
-                  fill="hsl(var(--muted-foreground))" 
-                  opacity={0.6}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Trade Entries */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Entradas do Bot</CardTitle>
-          <CardDescription>Últimas entradas executadas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
+          <div className="space-y-2 max-h-48 overflow-y-auto">
             {tradeEntries.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">
-                Nenhuma entrada registrada
+                Aguardando entradas do bot...
               </p>
             ) : (
-              tradeEntries.map((trade) => (
-                <div key={trade.id} className="flex items-center justify-between p-2 border rounded">
-                  <div className="flex items-center space-x-2">
+              tradeEntries.slice(0, 10).map((trade) => (
+                <div key={trade.id} className="flex items-center justify-between p-3 border rounded-lg bg-card/50">
+                  <div className="flex items-center space-x-3">
                     <Badge 
                       variant={trade.type === 'CALL' ? 'default' : 'destructive'}
-                      className="text-xs"
+                      className="text-xs px-2"
                     >
                       {trade.type}
                     </Badge>
-                    <span className="font-mono text-sm">${trade.amount}</span>
-                    <span className="text-muted-foreground text-sm">
-                      @${trade.price.toFixed(2)}
+                    <div className="text-sm">
+                      <span className="font-mono">${trade.amount}</span>
+                      <span className="text-muted-foreground ml-2">
+                        @${trade.entryPrice.toFixed(3)}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(trade.timestamp).toLocaleTimeString('pt-BR')}
                     </span>
                   </div>
-                  <Badge 
-                    variant={
-                      trade.status === 'won' ? 'default' : 
-                      trade.status === 'lost' ? 'destructive' : 'secondary'
-                    }
-                    className="text-xs"
-                  >
-                    {trade.status === 'won' ? 'GANHOU' : 
-                     trade.status === 'lost' ? 'PERDEU' : 'ATIVO'}
-                  </Badge>
+                  <div className="flex items-center space-x-2">
+                    {trade.exitPrice && (
+                      <span className="text-xs font-mono text-muted-foreground">
+                        → ${trade.exitPrice.toFixed(3)}
+                      </span>
+                    )}
+                    <Badge 
+                      variant={
+                        trade.status === 'won' ? 'default' : 
+                        trade.status === 'lost' ? 'destructive' : 'secondary'
+                      }
+                      className="text-xs"
+                    >
+                      {trade.status === 'won' ? 'GANHOU' : 
+                       trade.status === 'lost' ? 'PERDEU' : 'ATIVO'}
+                    </Badge>
+                  </div>
                 </div>
               ))
             )}
@@ -298,5 +468,5 @@ const LiveChart = () => {
 };
 
 export const EquityCurveChart = () => {
-  return <LiveChart />;
+  return <LiveCandlestickChart />;
 };

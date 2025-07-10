@@ -27,50 +27,28 @@ export const BacktestControls = () => {
       return;
     }
 
+    if (isRunning) {
+      // Stop backtest
+      setIsRunning(false);
+      toast({
+        title: "Backtest Interrompido",
+        description: "Execução do backtest foi interrompida.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Start continuous backtest
     setIsRunning(true);
     toast({
       title: "Backtest Iniciado",
-      description: `Executando estratégia ${strategy} em ${symbol}`,
+      description: `Executando estratégia ${strategy} em ${symbol} continuamente`,
     });
 
-    try {
-      // Simulate backtesting process
-      let progress = 0;
-      const progressInterval = setInterval(() => {
-        progress += 10;
-        if (progress <= 100) {
-          toast({
-            title: "Backtest em Progresso",
-            description: `Processando... ${progress}%`,
-          });
-        }
-      }, 300);
-
-      // Complete after 3 seconds
-      setTimeout(() => {
-        clearInterval(progressInterval);
-        setIsRunning(false);
-        toast({
-          title: "Backtest Concluído",
-          description: "Resultados atualizados no gráfico de equity.",
-        });
-      }, 3000);
-    } catch (error) {
-      setIsRunning(false);
-      toast({
-        title: "Backtest Falhou",
-        description: "Erro ao executar o backtest.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleStopBacktest = () => {
-    setIsRunning(false);
+    // Simulate continuous backtest - doesn't stop automatically
     toast({
-      title: "Backtest Interrompido",
-      description: "Execução do backtest foi interrompida.",
-      variant: "destructive",
+      title: "Modo Contínuo Ativo",
+      description: "O backtest rodará continuamente até ser interrompido manualmente.",
     });
   };
 
@@ -171,24 +149,29 @@ export const BacktestControls = () => {
 
       {/* Controls */}
       <div className="space-y-3">
-        {!isRunning ? (
-          <Button
-            onClick={handleRunBacktest}
-            className="w-full btn-trading"
-            disabled={!strategy || !symbol || !timeframe}
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Executar Backtest
-          </Button>
-        ) : (
-          <Button
-            onClick={handleStopBacktest}
-            variant="destructive"
-            className="w-full"
-          >
-            <Square className="h-4 w-4 mr-2" />
-            Parar Backtest
-          </Button>
+        <Button
+          onClick={handleRunBacktest}
+          className={`w-full ${isRunning ? 'bg-red-600 hover:bg-red-700' : 'btn-trading'}`}
+          disabled={!strategy || !symbol || !timeframe}
+        >
+          {isRunning ? (
+            <>
+              <Square className="h-4 w-4 mr-2" />
+              Parar Backtest Contínuo
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4 mr-2" />
+              Iniciar Backtest Contínuo
+            </>
+          )}
+        </Button>
+
+        {isRunning && (
+          <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+            <div className="animate-pulse h-2 w-2 bg-green-500 rounded-full"></div>
+            <span>Executando continuamente...</span>
+          </div>
         )}
 
         <Button
@@ -198,7 +181,7 @@ export const BacktestControls = () => {
           disabled={isRunning}
         >
           <RotateCcw className="h-4 w-4 mr-2" />
-          Reset Parameters
+          Resetar Parâmetros
         </Button>
       </div>
 
