@@ -126,16 +126,16 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-background flex w-full">
+      <div className="h-screen bg-background flex w-full overflow-hidden">
         {/* Sidebar */}
         <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         
         {/* Main Content */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col h-full">
           {/* Header - Only show when not on home page */}
           {activeTab !== "home" && (
-            <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-              <div className="container mx-auto px-6 py-4">
+            <header className="border-b border-border bg-card/50 backdrop-blur-sm z-50 flex-shrink-0">
+              <div className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
@@ -212,8 +212,8 @@ const Index = () => {
           )}
 
           {/* Page Content */}
-          <main className="flex-1 container mx-auto px-4 py-6">
-            <div className="animate-fade-in">
+          <main className="flex-1 overflow-auto p-6">
+            <div className="animate-fade-in h-full">
               {renderActiveContent()}
             </div>
           </main>
