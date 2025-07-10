@@ -42,12 +42,16 @@ const LiveCandlestickChart = () => {
       for (let i = 0; i < 100; i++) {
         const timestamp = Date.now() - (100 - i) * 60000; // 1 minute candles
         
-        // Generate OHLC data
+        // Generate OHLC data with realistic variations
         const open = basePrice;
-        const volatility = (Math.random() - 0.5) * 0.02; // 2% max change
+        const volatility = (Math.random() - 0.5) * 0.08; // 8% max change for more variation
         const close = open * (1 + volatility);
-        const high = Math.max(open, close) * (1 + Math.random() * 0.01);
-        const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+        
+        // Create realistic high/low with proper ranges
+        const highVariation = Math.random() * 0.03; // Up to 3% higher
+        const lowVariation = Math.random() * 0.03;  // Up to 3% lower
+        const high = Math.max(open, close) * (1 + highVariation);
+        const low = Math.min(open, close) * (1 - lowVariation);
         
         data.push({
           time: new Date(timestamp).toLocaleTimeString('pt-BR', { 
