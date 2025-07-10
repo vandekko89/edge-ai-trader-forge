@@ -7,6 +7,7 @@ import { Activity, TrendingUp, Brain, Settings, BarChart3, Zap, Target, AlertTri
 import { EquityCurveChart } from "@/components/dashboard/EquityCurveChart";
 import { BacktestControls } from "@/components/dashboard/BacktestControls";
 import { MetricsCard } from "@/components/dashboard/MetricsCard";
+import { AIAnalysis } from "@/components/dashboard/AIAnalysis";
 import { StrategyManager } from "@/components/strategies/StrategyManager";
 
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
@@ -77,10 +78,14 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[400px] mb-8">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[500px] mb-8">
             <TabsTrigger value="dashboard" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center space-x-2">
+              <Brain className="h-4 w-4" />
+              <span className="hidden sm:inline">IA</span>
             </TabsTrigger>
             <TabsTrigger value="strategies" className="flex items-center space-x-2">
               <Target className="h-4 w-4" />
@@ -166,6 +171,10 @@ const Index = () => {
                 </Card>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="ai">
+            <AIAnalysis />
           </TabsContent>
 
           <TabsContent value="strategies">
