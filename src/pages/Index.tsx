@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/navigation/AppSidebar";
 import { EquityCurveChart } from "@/components/dashboard/EquityCurveChart";
 import { BacktestControls } from "@/components/dashboard/BacktestControls";
 import { MetricsCard } from "@/components/dashboard/MetricsCard";
+import { TradingHistory } from "@/components/dashboard/TradingHistory";
 import { AIAnalysis } from "@/components/dashboard/AIAnalysis";
 import { StrategyManager } from "@/components/strategies/StrategyManager";
 import { TradingPanel } from "@/components/trading/TradingPanel";
@@ -28,37 +29,8 @@ const Index = () => {
       case "dashboard":
         return (
           <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <MetricsCard
-                title="Portfolio Value"
-                value={`$${portfolioValue.toLocaleString()}`}
-                change={`+${totalReturn}%`}
-                trend="up"
-                icon={TrendingUp}
-              />
-              <MetricsCard
-                title="Daily P&L"
-                value={`$${Math.abs(dailyPnL).toLocaleString()}`}
-                change={dailyPnL >= 0 ? "Profit" : "Loss"}
-                trend={dailyPnL >= 0 ? "up" : "down"}
-                icon={BarChart3}
-              />
-              <MetricsCard
-                title="Active Strategies"
-                value={activeStrategies.toString()}
-                change="Running"
-                trend="neutral"
-                icon={Target}
-              />
-              <MetricsCard
-                title="AI Confidence"
-                value="94.2%"
-                change="High"
-                trend="up"
-                icon={Brain}
-              />
-            </div>
+            {/* Trading History Table */}
+            <TradingHistory />
 
             {/* Equity Curve Chart - Full Width */}
             <Card className="trading-card">
