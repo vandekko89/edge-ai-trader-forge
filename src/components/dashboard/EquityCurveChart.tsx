@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar } from 'recharts';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -390,18 +390,11 @@ const LiveCandlestickChart = () => {
                   tickFormatter={(value) => `$${value.toFixed(2)}`}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                
-                {/* Render custom candlesticks */}
-                {candleData.map((candle, index) => (
-                  <CustomCandlestick
-                    key={index}
-                    x={(index / candleData.length) * 100 + '%'}
-                    y={0}
-                    width={100 / candleData.length + '%'}
-                    height="100%"
-                    payload={candle}
-                  />
-                ))}
+                <Bar 
+                  dataKey="close" 
+                  shape={<CustomCandlestick />}
+                  fill="transparent"
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

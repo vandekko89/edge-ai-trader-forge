@@ -11,10 +11,11 @@ import { derivApi } from "@/services/derivApi";
 
 export const BacktestControls = () => {
   const [isRunning, setIsRunning] = useState(false);
-  const [strategy, setStrategy] = useState("");
-  const [symbol, setSymbol] = useState("");
-  const [timeframe, setTimeframe] = useState("");
+  const [strategy, setStrategy] = useState("ema_rsi");
+  const [symbol, setSymbol] = useState("R_50");
+  const [timeframe, setTimeframe] = useState("1m");
   const [initialBalance, setInitialBalance] = useState("10000");
+  const [tradeCount, setTradeCount] = useState(0);
   const { toast } = useToast();
 
   const handleRunBacktest = async () => {
@@ -30,6 +31,10 @@ export const BacktestControls = () => {
     if (isRunning) {
       // Stop backtest
       setIsRunning(false);
+      if ((window as any).backtestInterval) {
+        clearInterval((window as any).backtestInterval);
+        (window as any).backtestInterval = null;
+      }
       toast({
         title: "Backtest Interrompido",
         description: "Execução do backtest foi interrompida.",
@@ -40,16 +45,21 @@ export const BacktestControls = () => {
 
     // Start continuous backtest
     setIsRunning(true);
+    setTradeCount(0);
     toast({
       title: "Backtest Iniciado",
       description: `Executando estratégia ${strategy} em ${symbol} continuamente`,
     });
 
-    // Simulate continuous backtest - doesn't stop automatically
-    toast({
-      title: "Modo Contínuo Ativo",
-      description: "O backtest rodará continuamente até ser interrompido manualmente.",
-    });
+    // Simulate continuous trading with periodic updates
+    const interval = setInterval(() => {
+      if (Math.random() > 0.8) { // 20% chance of trade each cycle
+        setTradeCount(prev => prev + 1);
+      }
+    }, 2000);
+
+    // Store interval for cleanup
+    (window as any).backtestInterval = interval;
   };
 
   const handleReset = () => {
@@ -206,7 +216,7 @@ export const BacktestControls = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Trades Executados:</span>
-            <span className="font-medium">{isRunning ? '...' : '156'}</span>
+            <span className="font-medium">{isRunning ? tradeCount : '156'}</span>
           </div>
         </div>
       </Card>
