@@ -710,12 +710,12 @@ const LiveCandlestickChart = () => {
             {isLive ? (
               <>
                 <Square className="h-4 w-4 mr-2" />
-                Parar Live
+                Parar
               </>
             ) : (
               <>
                 <Play className="h-4 w-4 mr-2" />
-                Iniciar Live
+                Iniciar
               </>
             )}
           </Button>
@@ -726,7 +726,7 @@ const LiveCandlestickChart = () => {
               syncStatus === 'updating' ? 'bg-yellow-500 animate-spin' :
               'bg-red-500'
             }`} />
-            <span>{isLive ? "AO VIVO" : "HISTÓRICO"}</span>
+            <span>{isLive ? "ATIVO" : "HISTÓRICO"}</span>
           </Badge>
           
           <div className="text-sm text-muted-foreground flex items-center space-x-2">
@@ -745,35 +745,6 @@ const LiveCandlestickChart = () => {
             )}
           </div>
 
-          {/* Zoom Controls */}
-          <div className="flex items-center space-x-2 border-l pl-4">
-            <Button
-              onClick={handleZoomIn}
-              variant="outline"
-              size="sm"
-              disabled={candleCount <= 10}
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={handleZoomOut}
-              variant="outline"
-              size="sm"
-              disabled={candleCount >= candleData.length}
-            >
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={handleResetZoom}
-              variant="outline"
-              size="sm"
-            >
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              {candleCount} candles • {zoomLevel.toFixed(1)}x
-            </span>
-          </div>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -789,7 +760,7 @@ const LiveCandlestickChart = () => {
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Settings className="h-4 w-4 mr-2" />
-                  API Deriv
+                  Conexão
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -824,7 +795,7 @@ const LiveCandlestickChart = () => {
                   )}
                   
                   <div className="space-y-2">
-                    <Label htmlFor="deriv-token">Token da API Deriv</Label>
+                    <Label htmlFor="deriv-token">Token de Conexão</Label>
                     <Input
                       id="deriv-token"
                       type="password"
@@ -862,19 +833,6 @@ const LiveCandlestickChart = () => {
             </Dialog>
           </div>
 
-          <div className="text-sm text-muted-foreground">
-            {candleData.length > 0 && (
-              <>
-                Último: ${candleData[candleData.length - 1]?.close.toFixed(3)} 
-                <span className={
-                  candleData[candleData.length - 1]?.close >= candleData[candleData.length - 1]?.open 
-                    ? 'text-green-600 ml-2' : 'text-red-600 ml-2'
-                }>
-                  {((candleData[candleData.length - 1]?.close - candleData[candleData.length - 1]?.open) / candleData[candleData.length - 1]?.open * 100).toFixed(2)}%
-                </span>
-              </>
-            )}
-          </div>
         </div>
       </div>
 
