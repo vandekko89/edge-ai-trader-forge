@@ -135,15 +135,11 @@ export const SettingsPanel = () => {
         </Badge>
       </div>
 
-      <Tabs defaultValue="deriv" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="deriv" className="flex items-center space-x-2">
+      <Tabs defaultValue="corretora" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="corretora" className="flex items-center space-x-2">
             <Globe className="h-4 w-4" />
-            <span className="hidden sm:inline">Deriv</span>
-          </TabsTrigger>
-          <TabsTrigger value="brokers" className="flex items-center space-x-2">
-            <Key className="h-4 w-4" />
-            <span className="hidden sm:inline">Brokers</span>
+            <span className="hidden sm:inline">Corretora</span>
           </TabsTrigger>
           <TabsTrigger value="indicators" className="flex items-center space-x-2">
             <TrendingUp className="h-4 w-4" />
@@ -159,24 +155,20 @@ export const SettingsPanel = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="deriv" className="space-y-6">
-          <DerivConnection />
-        </TabsContent>
-
-        <TabsContent value="brokers" className="space-y-6">
+        <TabsContent value="corretora" className="space-y-6">
           <Card className="trading-card">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Key className="h-5 w-5 text-primary" />
-                <span>Broker Selection</span>
+                <Globe className="h-5 w-5 text-primary" />
+                <span>Seleção de Corretora</span>
               </CardTitle>
               <CardDescription>
-                Choose your broker and configure API credentials
+                Escolha sua corretora e configure as credenciais de acesso
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label htmlFor="broker-select">Select Broker</Label>
+                <Label htmlFor="corretora-select">Selecionar Corretora</Label>
                 <Select value={brokerSettings.selected_broker} onValueChange={(value) => 
                   setBrokerSettings(prev => ({ ...prev, selected_broker: value }))
                 }>
@@ -187,6 +179,8 @@ export const SettingsPanel = () => {
                     <SelectItem value="bybit">Bybit</SelectItem>
                     <SelectItem value="binance">Binance</SelectItem>
                     <SelectItem value="deriv">Deriv</SelectItem>
+                    <SelectItem value="iqoption">IQ Option</SelectItem>
+                    <SelectItem value="metatrader">MetaTrader</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -195,31 +189,33 @@ export const SettingsPanel = () => {
 
               {brokerSettings.selected_broker === "bybit" && (
                 <div className="space-y-4">
-                  <h4 className="font-medium">Bybit Credentials</h4>
+                  <h4 className="font-medium">Credenciais Bybit</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="bybit-key">API Key</Label>
+                      <Label htmlFor="bybit-key">Chave API</Label>
                       <Input
                         id="bybit-key"
                         type="password"
                         value={brokerSettings.bybit_api_key}
                         onChange={(e) => setBrokerSettings(prev => ({ ...prev, bybit_api_key: e.target.value }))}
                         className="mt-1"
+                        placeholder="Digite sua chave API"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="bybit-secret">Secret</Label>
+                      <Label htmlFor="bybit-secret">Chave Secreta</Label>
                       <Input
                         id="bybit-secret"
                         type="password"
                         value={brokerSettings.bybit_secret}
                         onChange={(e) => setBrokerSettings(prev => ({ ...prev, bybit_secret: e.target.value }))}
                         className="mt-1"
+                        placeholder="Digite sua chave secreta"
                       />
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="bybit-testnet">Testnet Mode</Label>
+                    <Label htmlFor="bybit-testnet">Modo de Teste (Testnet)</Label>
                     <Switch
                       id="bybit-testnet"
                       checked={apiSettings.testnet_mode}
@@ -233,26 +229,28 @@ export const SettingsPanel = () => {
 
               {brokerSettings.selected_broker === "binance" && (
                 <div className="space-y-4">
-                  <h4 className="font-medium">Binance Credentials</h4>
+                  <h4 className="font-medium">Credenciais Binance</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="binance-key">API Key</Label>
+                      <Label htmlFor="binance-key">Chave API</Label>
                       <Input
                         id="binance-key"
                         type="password"
                         value={brokerSettings.binance_api_key}
                         onChange={(e) => setBrokerSettings(prev => ({ ...prev, binance_api_key: e.target.value }))}
                         className="mt-1"
+                        placeholder="Digite sua chave API"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="binance-secret">Secret Key</Label>
+                      <Label htmlFor="binance-secret">Chave Secreta</Label>
                       <Input
                         id="binance-secret"
                         type="password"
                         value={brokerSettings.binance_secret}
                         onChange={(e) => setBrokerSettings(prev => ({ ...prev, binance_secret: e.target.value }))}
                         className="mt-1"
+                        placeholder="Digite sua chave secreta"
                       />
                     </div>
                   </div>
@@ -261,28 +259,91 @@ export const SettingsPanel = () => {
 
               {brokerSettings.selected_broker === "deriv" && (
                 <div className="space-y-4">
-                  <h4 className="font-medium">Deriv Credentials</h4>
+                  <h4 className="font-medium">Credenciais Deriv</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="deriv-app">App ID</Label>
+                      <Label htmlFor="deriv-app">ID do App</Label>
                       <Input
                         id="deriv-app"
                         type="password"
                         value={brokerSettings.deriv_app_id}
                         onChange={(e) => setBrokerSettings(prev => ({ ...prev, deriv_app_id: e.target.value }))}
                         className="mt-1"
+                        placeholder="Digite seu App ID"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="deriv-token">API Token</Label>
+                      <Label htmlFor="deriv-token">Token API</Label>
                       <Input
                         id="deriv-token"
                         type="password"
                         value={brokerSettings.deriv_token}
                         onChange={(e) => setBrokerSettings(prev => ({ ...prev, deriv_token: e.target.value }))}
                         className="mt-1"
+                        placeholder="Digite seu token API"
                       />
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {brokerSettings.selected_broker === "iqoption" && (
+                <div className="space-y-4">
+                  <h4 className="font-medium">Credenciais IQ Option</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="iq-email">Email</Label>
+                      <Input
+                        id="iq-email"
+                        type="email"
+                        className="mt-1"
+                        placeholder="Digite seu email"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="iq-password">Senha</Label>
+                      <Input
+                        id="iq-password"
+                        type="password"
+                        className="mt-1"
+                        placeholder="Digite sua senha"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {brokerSettings.selected_broker === "metatrader" && (
+                <div className="space-y-4">
+                  <h4 className="font-medium">Credenciais MetaTrader</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="mt-login">Login</Label>
+                      <Input
+                        id="mt-login"
+                        type="text"
+                        className="mt-1"
+                        placeholder="Digite seu login"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="mt-password">Senha</Label>
+                      <Input
+                        id="mt-password"
+                        type="password"
+                        className="mt-1"
+                        placeholder="Digite sua senha"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="mt-server">Servidor</Label>
+                    <Input
+                      id="mt-server"
+                      type="text"
+                      className="mt-1"
+                      placeholder="Ex: MetaQuotes-Demo"
+                    />
                   </div>
                 </div>
               )}
@@ -291,10 +352,10 @@ export const SettingsPanel = () => {
 
               <div className="flex space-x-3">
                 <Button onClick={saveBrokerSettings} className="btn-trading">
-                  Save Broker Settings
+                  Salvar Configurações
                 </Button>
                 <Button variant="outline" onClick={testConnection}>
-                  Test Connection
+                  Testar Conexão
                 </Button>
               </div>
             </CardContent>

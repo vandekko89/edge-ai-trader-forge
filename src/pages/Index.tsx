@@ -18,6 +18,7 @@ import { HomePage } from "@/components/home/HomePage";
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [isTrading, setIsTrading] = useState(false);
+  const [selectedBroker, setSelectedBroker] = useState("Bybit"); // Corretora selecionada
 
   // Mock data for demo
   const userName = "João Silva"; // Nome do usuário
@@ -144,7 +145,7 @@ const Index = () => {
                     <div className="flex items-center space-x-3">
                       <Badge variant="outline" className="border-success text-success">
                         <div className="w-2 h-2 rounded-full bg-success animate-pulse mr-2" />
-                        Conectado
+                        Conectado à {selectedBroker}
                       </Badge>
                       <div className="w-px h-4 bg-border" />
                       <span className="text-sm font-medium text-muted-foreground">
