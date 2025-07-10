@@ -128,30 +128,52 @@ const Index = () => {
         <div className="flex-1 flex flex-col">
           {/* Header - Only show when not on home page */}
           {activeTab !== "home" && (
-            <>
-              {/* Bot Control Center - Centralizado e em destaque */}
-              <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-b border-primary/20">
-                <div className="container mx-auto px-6 py-6">
-                  <div className="flex flex-col items-center space-y-4">
-                    {/* Status da Conexão */}
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 rounded-full bg-success animate-pulse" />
-                        <span className="text-sm font-medium text-success">Conectado</span>
-                      </div>
-                      <div className="w-px h-4 bg-border" />
-                      <div className="flex items-center space-x-2">
-                        <Brain className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">EdgeAIEngine</span>
-                      </div>
+            <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+              <div className="container mx-auto px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Brain className="h-8 w-8 text-primary" />
+                      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                        EdgeAIEngine
+                      </h1>
                     </div>
                     
-                    {/* Botão Principal de Controle */}
+                    {/* Status da conexão e operação */}
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="border-success text-success">
+                        <div className="w-2 h-2 rounded-full bg-success animate-pulse mr-2" />
+                        Conectado
+                      </Badge>
+                      {isTrading && (
+                        <Badge variant="outline" className="border-warning text-warning animate-pulse">
+                          Operando
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    {/* Métricas rápidas - apenas quando operando */}
+                    {isTrading && (
+                      <div className="hidden md:flex items-center space-x-6">
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Banca</p>
+                          <p className="text-lg font-bold text-foreground">${bancaAtual.toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Profit</p>
+                          <p className="text-lg font-bold profit">+${profit.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Botão Principal em Destaque */}
                     <Button
                       onClick={() => setIsTrading(!isTrading)}
                       size="lg"
                       className={`
-                        px-8 py-4 text-lg font-bold transition-all duration-300 transform hover:scale-105
+                        px-6 py-3 text-base font-bold transition-all duration-300 transform hover:scale-105
                         ${isTrading 
                           ? 'bg-danger hover:bg-danger/90 text-white shadow-lg shadow-danger/30' 
                           : 'bg-success hover:bg-success/90 text-white shadow-lg shadow-success/30'
@@ -160,47 +182,20 @@ const Index = () => {
                     >
                       {isTrading ? (
                         <>
-                          <AlertTriangle className="h-5 w-5 mr-3" />
+                          <AlertTriangle className="h-5 w-5 mr-2" />
                           PARAR BOT
                         </>
                       ) : (
                         <>
-                          <Zap className="h-5 w-5 mr-3" />
+                          <Zap className="h-5 w-5 mr-2" />
                           INICIAR BOT
                         </>
                       )}
                     </Button>
-                    
-                    {/* Status de Operação */}
-                    {isTrading && (
-                      <div className="flex items-center space-x-2 animate-fade-in">
-                        <Badge variant="outline" className="border-warning text-warning animate-pulse">
-                          Bot Operando
-                        </Badge>
-                        <div className="hidden md:flex items-center space-x-4 text-sm">
-                          <span className="text-muted-foreground">Banca: <strong className="text-foreground">${bancaAtual.toLocaleString()}</strong></span>
-                          <span className="text-muted-foreground">Profit: <strong className="profit">+${profit.toLocaleString()}</strong></span>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
-              
-              {/* Header Secundário */}
-              <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-                <div className="container mx-auto px-6 py-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Brain className="h-6 w-6 text-primary" />
-                      <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-                      </h1>
-                    </div>
-                  </div>
-                </div>
-              </header>
-            </>
+            </header>
           )}
 
           {/* Page Content */}
