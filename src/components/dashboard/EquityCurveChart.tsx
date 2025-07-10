@@ -152,7 +152,7 @@ const LiveCandlestickChart = () => {
           return [...prev.slice(0, -1), updatedCandle];
         }
       });
-    }, 1500);
+    }, 800); // Update every 0.8 seconds for precise real-time analysis
 
     return () => clearInterval(interval);
   }, [isLive]);
