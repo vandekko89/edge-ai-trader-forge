@@ -157,14 +157,18 @@ const LiveCandlestickChart = () => {
     return () => clearInterval(interval);
   }, [isLive]);
 
-  // Custom Candlestick component
+  // Custom Candlestick component - Professional brokerage style
   const CustomCandlestick = (props: any) => {
     const { x, y, width, height, payload } = props;
     if (!payload) return null;
 
     const { open, high, low, close, timestamp } = payload;
     const isGreen = close >= open;
-    const color = isGreen ? '#22c55e' : '#ef4444';
+    
+    // Professional brokerage colors
+    const greenColor = '#00c851'; // Bright green like real brokers
+    const redColor = '#ff3547';   // Bright red like real brokers
+    const color = isGreen ? greenColor : redColor;
     
     // Calculate Y positions based on price values relative to chart area
     const priceRange = high - low;
@@ -176,13 +180,15 @@ const LiveCandlestickChart = () => {
     const openY = y + ((high - open) / priceRange) * height;
     const closeY = y + ((high - close) / priceRange) * height;
     
+    // Professional candlestick dimensions
+    const centerX = x + width / 2;
+    const candleWidth = Math.max(width * 0.8, 5); // Professional thick body
+    const wickWidth = 1.5; // Thin professional wicks
+    
     // Body dimensions
     const bodyTop = Math.min(openY, closeY);
     const bodyBottom = Math.max(openY, closeY);
     const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
-    
-    const candleWidth = Math.max(width * 0.7, 3);
-    const centerX = x + width / 2;
     
     // Find trades at this time
     const tradesAtTime = tradeEntries.filter(trade => 
@@ -211,15 +217,15 @@ const LiveCandlestickChart = () => {
           strokeWidth={1}
         />
         
-        {/* Candle body */}
+        {/* Candle body - Professional brokerage style */}
         <rect
           x={centerX - candleWidth / 2}
           y={bodyTop}
           width={candleWidth}
           height={bodyHeight}
-          fill={isGreen ? color : 'transparent'}
+          fill={isGreen ? color : '#000000'} // Green solid, red hollow with black fill
           stroke={color}
-          strokeWidth={1}
+          strokeWidth={isGreen ? 0 : 2} // No border for green, thick border for red
         />
 
         {/* Trade markers */}
