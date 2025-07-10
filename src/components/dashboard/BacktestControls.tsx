@@ -20,17 +20,8 @@ export const BacktestControls = () => {
   const handleRunBacktest = async () => {
     if (!strategy || !symbol || !timeframe) {
       toast({
-        title: "Missing Parameters",
-        description: "Please fill all required fields before running backtest.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!derivApi.connected) {
-      toast({
-        title: "Connection Required",
-        description: "Please connect to Deriv API first in Settings tab.",
+        title: "Parâmetros Obrigatórios",
+        description: "Preencha todos os campos antes de executar o backtest.",
         variant: "destructive",
       });
       return;
@@ -38,27 +29,37 @@ export const BacktestControls = () => {
 
     setIsRunning(true);
     toast({
-      title: "Backtest Started",
-      description: `Running ${strategy} strategy on ${symbol}`,
+      title: "Backtest Iniciado",
+      description: `Executando estratégia ${strategy} em ${symbol}`,
     });
 
     try {
-      // Get active symbols to validate
-      await derivApi.getActiveSymbols();
-      
-      // Simulate backtest execution with real API connection
+      // Simulate backtesting process
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += 10;
+        if (progress <= 100) {
+          toast({
+            title: "Backtest em Progresso",
+            description: `Processando... ${progress}%`,
+          });
+        }
+      }, 300);
+
+      // Complete after 3 seconds
       setTimeout(() => {
+        clearInterval(progressInterval);
         setIsRunning(false);
         toast({
-          title: "Backtest Complete",
-          description: "Results have been updated in the equity curve.",
+          title: "Backtest Concluído",
+          description: "Resultados atualizados no gráfico de equity.",
         });
       }, 3000);
     } catch (error) {
       setIsRunning(false);
       toast({
-        title: "Backtest Failed",
-        description: "Failed to connect to market data.",
+        title: "Backtest Falhou",
+        description: "Erro ao executar o backtest.",
         variant: "destructive",
       });
     }
@@ -67,8 +68,8 @@ export const BacktestControls = () => {
   const handleStopBacktest = () => {
     setIsRunning(false);
     toast({
-      title: "Backtest Stopped",
-      description: "Backtest execution has been halted.",
+      title: "Backtest Interrompido",
+      description: "Execução do backtest foi interrompida.",
       variant: "destructive",
     });
   };
@@ -127,10 +128,10 @@ export const BacktestControls = () => {
               <SelectValue placeholder="Select symbol" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="BTCUSDT">BTC/USDT</SelectItem>
-              <SelectItem value="ETHUSDT">ETH/USDT</SelectItem>
-              <SelectItem value="ADAUSDT">ADA/USDT</SelectItem>
-              <SelectItem value="SOLUSDT">SOL/USDT</SelectItem>
+              <SelectItem value="R_50">Volatility 50</SelectItem>
+              <SelectItem value="R_75">Volatility 75</SelectItem>
+              <SelectItem value="R_100">Volatility 100</SelectItem>
+              <SelectItem value="FRXEURUSD">EUR/USD</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -177,7 +178,7 @@ export const BacktestControls = () => {
             disabled={!strategy || !symbol || !timeframe}
           >
             <Play className="h-4 w-4 mr-2" />
-            Run Backtest
+            Executar Backtest
           </Button>
         ) : (
           <Button
@@ -186,7 +187,7 @@ export const BacktestControls = () => {
             className="w-full"
           >
             <Square className="h-4 w-4 mr-2" />
-            Stop Backtest
+            Parar Backtest
           </Button>
         )}
 

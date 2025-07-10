@@ -8,7 +8,7 @@ import { EquityCurveChart } from "@/components/dashboard/EquityCurveChart";
 import { BacktestControls } from "@/components/dashboard/BacktestControls";
 import { MetricsCard } from "@/components/dashboard/MetricsCard";
 import { StrategyManager } from "@/components/strategies/StrategyManager";
-import { LogsMonitor } from "@/components/logs/LogsMonitor";
+
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 
 const Index = () => {
@@ -173,7 +173,9 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="logs">
-            <LogsMonitor />
+            <div className="text-center py-8 text-muted-foreground">
+              Logs em desenvolvimento
+            </div>
           </TabsContent>
 
           <TabsContent value="settings">
