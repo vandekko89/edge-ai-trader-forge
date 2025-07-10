@@ -216,14 +216,7 @@ const LiveCandlestickChart = () => {
       
       const connection = new DerivAPI({ app_id: 1089 });
       
-      // Test connection first
-      console.log('📡 Testando conexão...');
-      const pingResponse = await connection.ping();
-      if (pingResponse.error) {
-        throw new Error(`Erro de conexão: ${pingResponse.error.message}`);
-      }
-      
-      // Authorize with token
+      // Authorize with token directly (no ping needed)
       console.log('🔐 Autorizando token...');
       const authResponse = await connection.authorize(token);
       console.log('🔗 Resposta da autorização:', authResponse);
