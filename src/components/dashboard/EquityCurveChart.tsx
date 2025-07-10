@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ResponsiveContainer } from 'recharts';
+import { ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import DerivAPI from '@deriv/deriv-api';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Square, TrendingUp, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Play, Square, TrendingUp, ZoomIn, ZoomOut, RotateCcw, Settings, Link, AlertCircle } from "lucide-react";
 
 interface CandleData {
   time: string;
@@ -44,9 +48,16 @@ const LiveCandlestickChart = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [syncStatus, setSyncStatus] = useState<'synced' | 'updating' | 'delayed'>('synced');
   
-  // Trading Account State - LOCAL
+  // Deriv API Integration - LOCAL STORAGE
+  const [derivToken, setDerivToken] = useState<string>(localStorage.getItem('deriv_token') || '');
+  const [derivConnection, setDerivConnection] = useState<DerivAPI | null>(null);
+  const [realAccountData, setRealAccountData] = useState<any>(null);
+  const [isConnectedToReal, setIsConnectedToReal] = useState(false);
+  const [connectionError, setConnectionError] = useState<string>('');
+  
+  // Trading Account State - Can switch between MOCK and REAL
   const [account, setAccount] = useState<TradingAccount>({
-    balance: 1000.00,        // Saldo inicial de $1000
+    balance: 1000.00,        // Saldo inicial de $1000 (mock)
     initialBalance: 1000.00, // Balanço inicial para cálculos
     totalProfit: 0,
     totalLoss: 0,
@@ -185,6 +196,92 @@ const LiveCandlestickChart = () => {
       });
     }
   }, [tradeEntries]);
+
+  // Deriv API Connection Functions
+  const connectToDerivAPI = async (token: string) => {
+    try {
+      setConnectionError('');
+      setSyncStatus('updating');
+      
+      const connection = new DerivAPI({ app_id: 1089 });
+      await connection.ping();
+      
+      // Authorize with token
+      const authResponse = await connection.authorize(token);
+      console.log('🔗 Deriv Connected:', authResponse);
+      
+      if (authResponse.error) {
+        throw new Error(authResponse.error.message);
+      }
+      
+      // Get account balance
+      const balanceResponse = await connection.balance();
+      console.log('💰 Deriv Balance:', balanceResponse);
+      
+      setDerivConnection(connection);
+      setRealAccountData(authResponse.authorize);
+      setIsConnectedToReal(true);
+      
+      // Update account with real data
+      setAccount(prev => ({
+        ...prev,
+        balance: parseFloat(balanceResponse.balance.balance),
+        initialBalance: parseFloat(balanceResponse.balance.balance)
+      }));
+      
+      // Save token to localStorage
+      localStorage.setItem('deriv_token', token);
+      setDerivToken(token);
+      
+      setSyncStatus('synced');
+      console.log('✅ Conectado à conta real da Deriv!');
+      
+    } catch (error: any) {
+      setConnectionError(error.message || 'Erro ao conectar com Deriv');
+      setSyncStatus('delayed');
+      console.error('❌ Erro de conexão:', error);
+    }
+  };
+
+  const disconnectFromDerivAPI = () => {
+    if (derivConnection) {
+      derivConnection.disconnect();
+    }
+    setDerivConnection(null);
+    setRealAccountData(null);
+    setIsConnectedToReal(false);
+    localStorage.removeItem('deriv_token');
+    setDerivToken('');
+    setConnectionError('');
+    console.log('🔌 Desconectado da Deriv');
+  };
+
+  // Auto-connect on load if token exists
+  useEffect(() => {
+    const savedToken = localStorage.getItem('deriv_token');
+    if (savedToken && savedToken.length > 0) {
+      connectToDerivAPI(savedToken);
+    }
+  }, []);
+
+  // Real Deriv balance updates
+  useEffect(() => {
+    if (!derivConnection || !isConnectedToReal) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const balanceResponse = await derivConnection.balance();
+        setAccount(prev => ({
+          ...prev,
+          balance: parseFloat(balanceResponse.balance.balance)
+        }));
+      } catch (error) {
+        console.error('Erro ao atualizar saldo:', error);
+      }
+    }, 5000); // Update balance every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, [derivConnection, isConnectedToReal]);
 
 
   // Real-time synchronized live updates
@@ -634,18 +731,105 @@ const LiveCandlestickChart = () => {
           </div>
         </div>
 
-        <div className="text-sm text-muted-foreground">
-          {candleData.length > 0 && (
-            <>
-              Último: ${candleData[candleData.length - 1]?.close.toFixed(3)} 
-              <span className={
-                candleData[candleData.length - 1]?.close >= candleData[candleData.length - 1]?.open 
-                  ? 'text-green-600 ml-2' : 'text-red-600 ml-2'
-              }>
-                {((candleData[candleData.length - 1]?.close - candleData[candleData.length - 1]?.open) / candleData[candleData.length - 1]?.open * 100).toFixed(2)}%
-              </span>
-            </>
-          )}
+        <div className="flex items-center space-x-4">
+          {/* Deriv Connection Status */}
+          <div className="flex items-center space-x-2">
+            <Badge variant={isConnectedToReal ? "default" : "secondary"} className="flex items-center space-x-1">
+              <div className={`w-2 h-2 rounded-full ${isConnectedToReal ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
+              <span>{isConnectedToReal ? 'DERIV REAL' : 'MODO DEMO'}</span>
+            </Badge>
+            
+            {/* Deriv Settings Dialog */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  API Deriv
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center space-x-2">
+                    <Link className="h-5 w-5" />
+                    <span>Conectar à Deriv Real</span>
+                  </DialogTitle>
+                  <DialogDescription>
+                    Conecte sua conta real da Deriv para monitoramento da banca em tempo real.
+                    Seu token é armazenado localmente no navegador.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  {connectionError && (
+                    <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <span className="text-sm text-red-600">{connectionError}</span>
+                    </div>
+                  )}
+                  
+                  {isConnectedToReal && realAccountData && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-sm">
+                        <p className="font-medium text-green-800">✅ Conectado à Deriv</p>
+                        <p className="text-green-600">Conta: {realAccountData.loginid}</p>
+                        <p className="text-green-600">Email: {realAccountData.email}</p>
+                        <p className="text-green-600">Moeda: {realAccountData.currency}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="deriv-token">Token da API Deriv</Label>
+                    <Input
+                      id="deriv-token"
+                      type="password"
+                      placeholder="Cole seu token da Deriv API aqui..."
+                      value={derivToken}
+                      onChange={(e) => setDerivToken(e.target.value)}
+                      disabled={isConnectedToReal}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Obtenha seu token em: Deriv → Settings → API Token
+                    </p>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    {!isConnectedToReal ? (
+                      <Button 
+                        onClick={() => connectToDerivAPI(derivToken)}
+                        disabled={!derivToken || syncStatus === 'updating'}
+                        className="flex-1"
+                      >
+                        {syncStatus === 'updating' ? 'Conectando...' : 'Conectar'}
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={disconnectFromDerivAPI}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        Desconectar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="text-sm text-muted-foreground">
+            {candleData.length > 0 && (
+              <>
+                Último: ${candleData[candleData.length - 1]?.close.toFixed(3)} 
+                <span className={
+                  candleData[candleData.length - 1]?.close >= candleData[candleData.length - 1]?.open 
+                    ? 'text-green-600 ml-2' : 'text-red-600 ml-2'
+                }>
+                  {((candleData[candleData.length - 1]?.close - candleData[candleData.length - 1]?.open) / candleData[candleData.length - 1]?.open * 100).toFixed(2)}%
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
