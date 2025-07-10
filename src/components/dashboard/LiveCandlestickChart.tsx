@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { derivApi } from "@/services/derivApi";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Play, Square, Wifi, WifiOff } from "lucide-react";
 
 interface CandleData {
   time: string;
@@ -28,6 +32,7 @@ const LiveCandlestickChart = () => {
   const [tradeEntries, setTradeEntries] = useState<TradeEntry[]>([]);
   const [currentSymbol, setCurrentSymbol] = useState('R_50');
   const [isLive, setIsLive] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const chartRef = useRef<any>(null);
 
   // Gerar dados mock
@@ -352,16 +357,55 @@ const LiveCandlestickChart = () => {
             </span>
           </div>
         </div>
-        <button
-          onClick={() => setIsLive(!isLive)}
-          className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-            isLive 
-              ? 'bg-red-500 text-white hover:bg-red-600' 
-              : 'bg-green-500 text-white hover:bg-green-600'
-          }`}
-        >
-          {isLive ? 'Parar' : 'Iniciar'} Live
-        </button>
+        <div className="flex items-center gap-2">
+          <Badge variant={connectionStatus === 'connected' ? 'default' : 'secondary'}>
+            <div className="flex items-center gap-1">
+              {connectionStatus === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+              {connectionStatus.toUpperCase()}
+            </div>
+          </Badge>
+          
+          <Button
+            onClick={async () => {
+              if (!isLive) {
+                setConnectionStatus('connecting');
+                try {
+                  if (!derivApi.connected) {
+                    await derivApi.connect();
+                  }
+                  setConnectionStatus('connected');
+                  setIsLive(true);
+                } catch (error) {
+                  setConnectionStatus('disconnected');
+                  console.error('Falha ao conectar com Deriv API:', error);
+                }
+              } else {
+                setIsLive(false);
+                setConnectionStatus(derivApi.connected ? 'connected' : 'disconnected');
+              }
+            }}
+            variant={isLive ? "destructive" : "default"}
+            size="sm"
+            disabled={connectionStatus === 'connecting'}
+          >
+            {connectionStatus === 'connecting' ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                Conectando...
+              </>
+            ) : isLive ? (
+              <>
+                <Square className="h-4 w-4 mr-2" />
+                Parar Live
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 mr-2" />
+                Iniciar Live
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <ResponsiveContainer width="100%" height="100%">

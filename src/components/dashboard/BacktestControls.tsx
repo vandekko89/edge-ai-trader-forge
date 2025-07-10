@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Square, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { derivApi } from "@/services/derivApi";
 
 export const BacktestControls = () => {
   const [isRunning, setIsRunning] = useState(false);
@@ -16,11 +17,20 @@ export const BacktestControls = () => {
   const [initialBalance, setInitialBalance] = useState("10000");
   const { toast } = useToast();
 
-  const handleRunBacktest = () => {
+  const handleRunBacktest = async () => {
     if (!strategy || !symbol || !timeframe) {
       toast({
         title: "Missing Parameters",
         description: "Please fill all required fields before running backtest.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!derivApi.connected) {
+      toast({
+        title: "Connection Required",
+        description: "Please connect to Deriv API first in Settings tab.",
         variant: "destructive",
       });
       return;
@@ -32,14 +42,26 @@ export const BacktestControls = () => {
       description: `Running ${strategy} strategy on ${symbol}`,
     });
 
-    // Simulate backtest execution
-    setTimeout(() => {
+    try {
+      // Get active symbols to validate
+      await derivApi.getActiveSymbols();
+      
+      // Simulate backtest execution with real API connection
+      setTimeout(() => {
+        setIsRunning(false);
+        toast({
+          title: "Backtest Complete",
+          description: "Results have been updated in the equity curve.",
+        });
+      }, 3000);
+    } catch (error) {
       setIsRunning(false);
       toast({
-        title: "Backtest Complete",
-        description: "Results have been updated in the equity curve.",
+        title: "Backtest Failed",
+        description: "Failed to connect to market data.",
+        variant: "destructive",
       });
-    }, 3000);
+    }
   };
 
   const handleStopBacktest = () => {
